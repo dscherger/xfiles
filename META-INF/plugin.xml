@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin url="http://www.echologic.com/...">
+
+    <name>XFiles</name>
+
+    <description>
+        A plugin that docks below the project pane to list interesting, changed, open files
+        to aid with navigation between the files you are hopefully interested in.
+    </description>
+
+    <version>0.1</version>
+    <vendor url="http://www.echologic.com" email="derek@echologic.com">echologic software corporation</vendor>
+    <change-notes>
+        just getting started
+    </change-notes>
+
+    <idea-version since-build="4.0" until-build="5.0"/>
+
+    <application-components>
+    </application-components>
+
+    <project-components>
+        <component>
+            <implementation-class>com.echologic.xfiles.XFiles</implementation-class>
+            <!--save plugin config in iws file-->
+            <option name="workspace" value="true"/>
+        </component>
+    </project-components>
+
+    <module-components>
+    </module-components>
+
+    <actions>
+    </actions>
+
+</idea-plugin>
+
+
