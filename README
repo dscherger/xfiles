@@ -4,11 +4,15 @@ The ant build.xml requires a build.properties file that must be created with the
 following properties, set appropriately for your environment.
 
 	idea.dir=$IDEA_HOME
+	plugin.dir=$HOME/config/plugins
 	jdk.dir=$JAVA_HOME
 
 With these properties set appropriately, the "all" target will build and install the
 plugin, which will be active after restarting intellij (but see the LOGGING section
 below before restarting).
+
+The plugin.dir is separated out as plugins may be installed on a per-user basis
+in their local configuration directories.
 
 LOGGING
 

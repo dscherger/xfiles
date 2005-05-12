@@ -2,23 +2,15 @@
 
 <project name="XFiles Plugin" default="all" basedir=".">
     <property file="build.properties"/>
-    <!--<property name="idea.dir" value="${user.home}/intellij/IntelliJ-IDEA-2253"/>-->
     <property name="idea.build.lib" value="${idea.dir}/redist"/>
-    <property name="idea.plugins" value="${idea.dir}/plugins"/>
     <property name="idea.lib" value="${idea.dir}/lib"/>
 
     <taskdef name="javac2" classname="com.intellij.uiDesigner.ant.Javac2" classpath="${idea.build.lib}/javac2.jar"/>
 
-    <!-- Initialize some properties -->
-    <!--<property name="dir.jdk.lib" value="/opt/sun-jdk-1.4.2.08/lib"/>-->
-    <!--<property name="jdk.lib" value="${jdk.dir}/lib"/>-->
-
-    <!-- change this value to your .jar file name -->
     <property name="plugin.name" value="xfiles"/>
 
     <property name="build.debug" value="on"/>
 
-    <!--<property name="dir.top" value="."/>-->
     <property name="dir.dest" value="${basedir}/build"/>
     <property name="dir.dest.classes" value="${dir.dest}/classes"/>
     <property name="dir.dest.metainf" value="${dir.dest}/META-INF"/>
@@ -29,7 +21,6 @@
 
     <property name="dir.src" value="${basedir}/src"/>
     <property name="dir.test" value="${basedir}/test"/>
-    <property name="dir.lib" value="${basedir}/lib"/>
 
     <property name="jar.plugin" value="${dir.dest.jar}/${plugin.name}.jar"/>
     <property name="plugin.xml" value="${basedir}/META-INF/plugin.xml"/>
@@ -77,8 +68,6 @@
                     <exclude name="**/collect.jar"/>
                     <exclude name="**/gjc-rt.jar"/>
                 </fileset>
-                <fileset dir="${dir.lib}" includes="*.jar"/>
-                <!--<pathelement location="${basedir}/../../classes/"/>-->
             </classpath>
         </javac2>
 
@@ -96,11 +85,13 @@
     </target>
 
     <target name="install" depends="init">
-        <copy file="${jar.plugin}" todir="${idea.plugins}"/>
+        <echo message="installing ${plugin.dir}/${plugin.name}.jar"/>
+        <copy file="${jar.plugin}" todir="${plugin.dir}"/>
     </target>
 
     <target name="uninstall" depends="init">
-        <delete file="${idea.plugins}/${plugin.name}.jar"/>
+        <echo message="uninstalling ${plugin.dir}/${plugin.name}.jar"/>
+        <delete file="${plugin.dir}/${plugin.name}.jar"/>
     </target>
 
     <target name="javadoc" depends="compile" description="Build the JavaDocs">
@@ -126,8 +117,6 @@
                     <exclude name="**/collect.jar"/>
                     <exclude name="**/gjc-rt.jar"/>
                 </fileset>
-                <fileset dir="${dir.lib}" includes="*.jar"/>
-                <!--<pathelement location="${basedir}/../../classes/"/>-->
             </classpath>
 
             <fileset dir="${dir.src}" includes="**/*.java"/>

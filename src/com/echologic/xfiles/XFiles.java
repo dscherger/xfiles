@@ -25,7 +25,11 @@ public class XFiles implements ProjectComponent {
 
 	public XFiles(Project project) {
 	        this.project = project;
-		this.name = project.getName();
+		if (project != null) 
+		    this.name = project.getName();
+		else
+		    this.name = "null";
+
 		log.debug(name + " constructed");
 		logStuff();
 	}
