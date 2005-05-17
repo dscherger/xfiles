@@ -10,7 +10,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -92,10 +94,6 @@ public class XFiles implements ProjectComponent {
 		    log.debug(name + " source root " + sourceRoot.getPath());
 		}
 
-		// various index methods that look interesting and possibly relevant
-		//ProjectFileIndex index = projectRootManager.getFileIndex();
-		//index.isIgnored(file)
-
 		ModuleManager moduleManager = ModuleManager.getInstance(project);
 		Module[] modules = moduleManager.getModules();
 
@@ -158,6 +156,21 @@ public class XFiles implements ProjectComponent {
 		FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
 		fileEditorManager.addFileEditorManagerListener(fileEditorManagerListener);
 
+		// various index methods that look interesting and possibly relevant
+		ProjectFileIndex index = projectRootManager.getFileIndex();
+		ContentIterator iterator = new ContentIterator() {
+			public boolean processFile(VirtualFile fileOrDir) {
+				log.debug(name + " virtual file " + getStatus(fileOrDir) + " " + fileOrDir.getPath());
+				return true;
+			}
+		};
+
+		log.debug("iterating content under roots");
+		for (int i = 0; i < roots.length; i++) {
+		 	VirtualFile root = roots[i];
+			log.debug(name + " root " + root.getPath() + " isInContent " + index.isInContent(root));
+			index.iterateContentUnderDirectory(root, iterator);
+		}
 	}
 
 	private String identify(Object object) {
@@ -168,7 +181,7 @@ public class XFiles implements ProjectComponent {
 	private String getStatus(VirtualFile file) {
 		if (fileStatusProvider != null) {
 			FileStatus status = fileStatusProvider.getStatus(file);
-			return "[status=" + status.getText() + "]";
+			return "[status=" + status.getText() + "; class=" + status.getClass() + "]";
 		} else {
 			return "[status=n/a]";
 		}
