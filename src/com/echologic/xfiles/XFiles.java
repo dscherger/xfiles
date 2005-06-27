@@ -26,6 +26,7 @@ public class XFiles implements ProjectComponent {
 	private Project project;
 	private String name;
 	private FileStatusProvider fileStatusProvider;
+	private FileStatusManager fileStatusManager;
 
 	public XFiles(Project project) {
 	        this.project = project;
@@ -129,23 +130,23 @@ public class XFiles implements ProjectComponent {
 			}
 
 			public void fileStatusChanged(VirtualFile file) {
-				log.debug(name + " status changed " + getStatus(file) + " " + file.getPath());
-			}
+                getStatus("statusChanged", file);
+            }
 		};
 
-		FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+		fileStatusManager = FileStatusManager.getInstance(project);
 		fileStatusManager.addFileStatusListener(fileStatusListener);
 
-		// need to filter files in here so that we only see things under our roots
+        // need to filter files in here so that we only see things under our roots
 		// also, these events seem to come in triplicate... :-/
 
 		FileEditorManagerListener fileEditorManagerListener = new FileEditorManagerListener() {
 			public void fileOpened(FileEditorManager fileEditorManager, VirtualFile file) {
-				log.debug(name + " file opened " + getStatus(file) + " " + file.getPath());
-			}
+                getStatus("fileOpenened", file);
+            }
 
 			public void fileClosed(FileEditorManager fileEditorManager, VirtualFile file) {
-				log.debug(name + " file closed " + getStatus(file) + " " + file.getPath());
+				getStatus("fileClosed", file);
 			}
 
 			public void selectionChanged(FileEditorManagerEvent event) {
@@ -160,17 +161,19 @@ public class XFiles implements ProjectComponent {
 		ProjectFileIndex index = projectRootManager.getFileIndex();
 		ContentIterator iterator = new ContentIterator() {
 			public boolean processFile(VirtualFile fileOrDir) {
-				log.debug(name + " virtual file " + getStatus(fileOrDir) + " " + fileOrDir.getPath());
+                getStatus("processFile", fileOrDir);
 				return true;
 			}
 		};
 
+        /*
 		log.debug("iterating content under roots");
 		for (int i = 0; i < roots.length; i++) {
 		 	VirtualFile root = roots[i];
 			log.debug(name + " root " + root.getPath() + " isInContent " + index.isInContent(root));
 			index.iterateContentUnderDirectory(root, iterator);
 		}
+        */
 	}
 
 	private String identify(Object object) {
@@ -178,12 +181,27 @@ public class XFiles implements ProjectComponent {
 		return object.getClass() + "#" + System.identityHashCode(object);
 	}
 
-	private String getStatus(VirtualFile file) {
-		if (fileStatusProvider != null) {
+	private void getStatus(String message, VirtualFile file) {
+        // oddly PerforceFileStatusProvider indicates "Up to date" for pretty much everything
+        /*
+        if (fileStatusProvider != null) {
 			FileStatus status = fileStatusProvider.getStatus(file);
-			return "[status=" + status.getText() + "; class=" + status.getClass() + "]";
-		} else {
-			return "[status=n/a]";
-		}
+            log.debug(message + " " +
+                      status.getText() + " " +
+                      file.getPath() + " " +
+                      status.getClass() + " " +
+                      fileStatusProvider.getClass());
+        }
+        */
+
+        // fortunately FileStatusManagerImpl seems to indicate more reasonable statuses
+        if (fileStatusManager != null) {
+			FileStatus status = fileStatusManager.getStatus(file);
+            log.debug(message + " " +
+                      status.getText() + " " +
+                      file.getPath() + " " +
+                      status.getClass() + " " +
+                      fileStatusManager.getClass());
+        }
 	}
 }

@@ -84,12 +84,12 @@
         </jar>
     </target>
 
-    <target name="install" depends="init">
+    <target name="install" depends="init" description="install plugin jar">
         <echo message="installing ${plugin.dir}/${plugin.name}.jar"/>
         <copy file="${jar.plugin}" todir="${plugin.dir}"/>
     </target>
 
-    <target name="uninstall" depends="init">
+    <target name="uninstall" depends="init" description="uninstall plugin jar">
         <echo message="uninstalling ${plugin.dir}/${plugin.name}.jar"/>
         <delete file="${plugin.dir}/${plugin.name}.jar"/>
     </target>
