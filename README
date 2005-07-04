@@ -46,6 +46,18 @@ but this looks like a bug. Standard log4j configuration uses %n to issue a platf
 specific line ending. Also, the PatternLayout above is different than the one
 intellij's configuration uses. Set it to something that makes you happy.
 
+TODO
+
+- main project panel
+- show files by status
+- show files matching pattern/glob
+- little endian sort by camel case class names
+- indicate open/closed files
+- allow for file open/close
+- allow for one row of tabs (to be basically ignored)
+- open files tab
+- selected files tab
+ 
 Cheers,
 
 Derek
