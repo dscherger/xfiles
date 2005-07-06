@@ -81,6 +81,7 @@
         <jar jarfile="${jar.plugin}" excludes="${jar.plugin}">
             <fileset dir="${dir.dest.classes}" includes="**/*.class"/>
             <fileset dir="${dir.dest}" includes="META-INF/"/>
+	    <fileset dir="${basedir}" includes="icons/**"/>
         </jar>
     </target>
 

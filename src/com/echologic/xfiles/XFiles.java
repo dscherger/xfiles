@@ -14,15 +14,20 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusListener;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.FileStatusProvider;
+import com.intellij.openapi.vcs.VcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -69,14 +74,14 @@ public class XFiles implements ProjectComponent {
     public void projectOpened() {
         log.debug("----------------------------------------");
         log.debug(name + " projectOpened");
-        logStuff();
+        //logStuff();
 
         registerToolWindow();
     }
 
     public void projectClosed() {
         log.debug(name + " projectClosed");
-        logStuff();
+        //logStuff();
         log.debug("----------------------------------------");
 
         unregisterToolWindow();
@@ -86,6 +91,8 @@ public class XFiles implements ProjectComponent {
         ToolWindowManager manager = ToolWindowManager.getInstance(project);
         ToolWindow window = manager.registerToolWindow(TOOL_WINDOW_ID, new XFilesToolWindow(), ToolWindowAnchor.LEFT);
         window.setTitle("Title");
+        //Icon icon = new ImageIcon("icons/xfiles.png");
+        //window.setIcon(icon);
         // TODO: assign hot key to activate window if that's even possible
 
     }
