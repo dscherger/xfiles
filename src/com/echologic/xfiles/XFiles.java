@@ -5,6 +5,9 @@
  */
 package com.echologic.xfiles;
 
+import javax.swing.ImageIcon;
+import javax.swing.Icon;
+
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -89,10 +92,10 @@ public class XFiles implements ProjectComponent {
 
     private void registerToolWindow() {
         ToolWindowManager manager = ToolWindowManager.getInstance(project);
-        ToolWindow window = manager.registerToolWindow(TOOL_WINDOW_ID, new XFilesToolWindow(), ToolWindowAnchor.LEFT);
+        ToolWindow window = manager.registerToolWindow(TOOL_WINDOW_ID, new XFilesToolWindow(project), ToolWindowAnchor.LEFT);
         window.setTitle("Title");
-        //Icon icon = new ImageIcon("icons/xfiles.png");
-        //window.setIcon(icon);
+        Icon icon = new ImageIcon(FilterAction.class.getResource("/objectBrowser/visibilitySort.png"));
+        window.setIcon(icon);
         // TODO: assign hot key to activate window if that's even possible
 
     }

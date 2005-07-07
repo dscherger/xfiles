@@ -5,6 +5,9 @@
  */
 package com.echologic.xfiles;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Iterator;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -29,7 +32,7 @@ public class FilterAction extends AnAction {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
-    private static Icon icon = new ImageIcon("icons/filter.png");
+    private static Icon icon = new ImageIcon(FilterAction.class.getResource("/actions/sync.png"));
 
     private DefaultListModel model;
 
@@ -45,13 +48,11 @@ public class FilterAction extends AnAction {
 
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
 
-        model.clear();
-
         VirtualFile[] files = fileEditorManager.getOpenFiles();
         for (int i = 0; i < files.length; i++) {
             VirtualFile file = files[i];
             log.debug("open file " + file.getPath());
-            model.addElement(file.getPath());
+            //model.addElement("open " + file.getName());
         }
 
         // various index methods that look interesting and possibly relevant
@@ -79,6 +80,9 @@ public class FilterAction extends AnAction {
         // all files like *Entry or Member*Entry (intellij must have globbing code somewhere -- oro?)
         // all files with compile errors (not sure if this is possible)
 
+        // TODO: add a dropdown menu to the toolbar with a sorted list of open files?
+        // TODO: type: any/java/non-java
+
         // ui should have a dropdown of defined filters to select one or create/edit/delete them
         // also various sort options
 
@@ -87,17 +91,42 @@ public class FilterAction extends AnAction {
         // - open files
         // - changed files
         // - missing files
+        // - selection of roots?
 
-        ContentIterator iterator = new ContentIterator() {
-            public boolean processFile(VirtualFile fileOrDir) {
+        final Map statusMap = new HashMap();
+
+        ContentIterator content = new ContentIterator() {
+            public boolean processFile(VirtualFile file) {
                 if (fileStatusManager != null) {
-                    String type = fileOrDir.isDirectory() ? "directory " : "file ";
+                    String type = file.isDirectory() ? "directory " : "file ";
 
-                    FileStatus status = fileStatusManager.getStatus(fileOrDir);
+                    FileStatus status = fileStatusManager.getStatus(file);
+
+                    statusMap.put(status.getText(), status);
+
                     log.debug(status.getText() + " " +
-                              type + fileOrDir.getPath() +
-                              " java " + index.isJavaSourceFile(fileOrDir) +
-                              " open " + fileEditorManager.isFileOpen(fileOrDir));
+                              type + file.getPath() +
+                              " java " + index.isJavaSourceFile(file) +
+                              " open " + fileEditorManager.isFileOpen(file));
+
+                    /*
+                    // we may want all of the following, and the others that aren't listed as well?
+                    index.isContentJavaSourceFile()
+                    index.isIgnored()
+                    index.isInContent()
+                    index.isInLibraryClasses()
+                    index.isInLibrarySource()
+                    index.isInSource()
+                    index.isInSourceContent()
+                    index.isInTestSourceContent()
+                    index.isJavaSourceFile()
+                    index.isLibraryClassFile()
+                    */
+
+                    if (!file.isDirectory()) {
+                        VirtualFileAdapter adapter = new VirtualFileAdapter(file, status, fileEditorManager.isFileOpen(file));
+                        model.addElement(adapter);
+                    }
                 }
                 return true;
             }
@@ -106,11 +135,29 @@ public class FilterAction extends AnAction {
         VirtualFile[] roots = projectRootManager.getContentRoots();
 
         log.debug("iterating content under roots");
+        model.clear();
+
         for (int i = 0; i < roots.length; i++) {
-                VirtualFile root = roots[i];
-                log.debug("root " + root.getPath() + " isInContent " + index.isInContent(root));
-                index.iterateContentUnderDirectory(root, iterator);
+            VirtualFile root = roots[i];
+            log.debug("root " + root.getPath() + " isInContent " + index.isInContent(root));
+
+            // TODO: possibly allow iterator.setRoot(root); so that we can remove the absolute paths?
+            // TODO: keep a set of the unique status values seen here and save them in the workspace
+            // to allow for display of selected statuses
+
+            index.iterateContentUnderDirectory(root, content);
         }
 
+        // nb: there seems to be no way to get the list of all file statuses in the 4.5.x openapi
+        // I seem to recall that there is a getAllFileStatuses api in the 5.0 eap openapi?
+
+        log.debug("available file statuses");
+
+        for (Iterator iterator = statusMap.keySet().iterator(); iterator.hasNext();) {
+            String text = (String) iterator.next();
+            FileStatus status = (FileStatus) statusMap.get(text);
+            log.debug("status " + text + " is " + status);
+
+        }
     }
 }
