@@ -6,8 +6,8 @@
 package com.echologic.xfiles;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
+import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -15,6 +15,7 @@ import javax.swing.ImageIcon;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -41,6 +42,10 @@ public class FilterAction extends AnAction {
         this.model = model;
     }
 
+    public void update(AnActionEvent e) {
+        Presentation presentation = e.getPresentation();
+    }
+
     public void actionPerformed(AnActionEvent event) {
         log.debug("actionPerformed");
 
@@ -52,7 +57,6 @@ public class FilterAction extends AnAction {
         for (int i = 0; i < files.length; i++) {
             VirtualFile file = files[i];
             log.debug("open file " + file.getPath());
-            //model.addElement("open " + file.getName());
         }
 
         // various index methods that look interesting and possibly relevant
@@ -123,8 +127,18 @@ public class FilterAction extends AnAction {
                     index.isLibraryClassFile()
                     */
 
-                    if (!file.isDirectory()) {
-                        VirtualFileAdapter adapter = new VirtualFileAdapter(file, status, fileEditorManager.isFileOpen(file));
+                    // TODO: consult a filter to decide whether we add this file or not
+                    // filter defintion needs to contain
+                    // - file status: selected/all
+                    // - editor state: open/closed/all
+                    // - module: selected/all
+                    // - file type: java/non-java/all
+                    // - file name glob:
+                    // - compiler status: ok/errors/all
+
+                    // this is monotone specific
+                    if (!file.isDirectory() && status.toString().equals("PATCHED")) {
+                        VirtualFileAdapter adapter = new VirtualFileAdapter(file, status);
                         model.addElement(adapter);
                     }
                 }
@@ -159,5 +173,10 @@ public class FilterAction extends AnAction {
             log.debug("status " + text + " is " + status);
 
         }
+
+        // this set of file statuses should be persisted in the workspace file (.iws)
+        // and only flushed when requested or something so that we can accumulate the
+        // complete list?!? although this is rather lame.
+
     }
 }

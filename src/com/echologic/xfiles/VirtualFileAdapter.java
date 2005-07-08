@@ -15,16 +15,22 @@ public class VirtualFileAdapter {
 
     VirtualFile file;
     FileStatus status;
-    boolean open;
 
-    public VirtualFileAdapter(VirtualFile file, FileStatus status, boolean open) {
+    public VirtualFileAdapter(VirtualFile file, FileStatus status) {
         this.file = file;
         this.status = status;
-        this.open = open;
+    }
+
+    public VirtualFile getFile() {
+        return file;
+    }
+
+    public FileStatus getStatus() {
+        return status;
     }
 
     public String toString() {
-        return file.getName();
+        return status.toString() + " " + file.getName();
     }
 
 }
