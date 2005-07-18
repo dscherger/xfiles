@@ -63,12 +63,6 @@ QUESTIONS
   and also to select various configured filters in the toolbar panel but the current toolbar
   and action stuff doesn't seem to provide anything but buttons
 
-BUGS
-
- - at the moment we seem to have something that breaks closing files... i.e. ctrl-f4
-   doesn't work and right-click close only works on files other than the active file
-
-
 Cheers,
 
 Derek

@@ -6,9 +6,7 @@
 package com.echologic.xfiles;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import javax.swing.DefaultListModel;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -42,39 +40,64 @@ public class XFilesToolWindow extends JPanel {
         super(new BorderLayout());
         this.project = project;
 
+        AnAction aaa = new ConfigurableFilterAction("aaa", "AAA");
+        AnAction bbb = new ConfigurableFilterAction("bbb", "BBB");
+        AnAction ccc = new ConfigurableFilterAction("ccc", "CCC");
+
+        FilterActionGroup selections = new FilterActionGroup();
+        selections.add(aaa);
+        selections.add(bbb);
+        selections.addSeparator();
+        selections.add(ccc);
+
         AnAction action = new FilterAction(model);
+        AnAction selected = new ConfigurableFilterAction("asdf", "asdf asdf");
+
+        AnAction scrollToSource = new ScrollToSourceAction();
+        AnAction scrollFromSource = new ScrollFromSourceAction();
 
         DefaultActionGroup group = new DefaultActionGroup("xfiles group", false);
-        group.addSeparator();
         group.add(action);
-        group.addSeparator();
+        group.add(selected);
+        group.add(scrollToSource);
+        group.add(scrollFromSource);
+        //group.add(selections);
 
-        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("here", group, true);
+        ActionManager actionManager = ActionManager.getInstance();
 
+        //ActionPopupMenu menu = actionManager.createActionPopupMenu("here", group);
+        //add(menu.getComponent(), BorderLayout.NORTH);
+
+        ActionToolbar toolbar = actionManager.createActionToolbar("XFilesActionToolbar", group, true);
         add(toolbar.getComponent(), BorderLayout.NORTH);
 
-        // TODO: need a proper renderer here to render in terms of the right status colour
-        // TODO: add a selection listener to open selected files
-        // TODO: consider scroll to/from source options
+        //ActionPopupMenu menu = actionManager.createActionPopupMenu("XFilesActionToolbar", selections);
+        //ActionPopupMenu main = actionManager.createActionPopupMenu(ActionPlaces.MAIN_TOOLBAR, selections);
+
+        //ActionPopupMenu main = actionManager.createActionPopupMenu("MainToolBar", selections);
+
+        //PopupHandler.installPopupHandler(this, selections, "MainToolBar"); // not ActionPlaces.MAIN_TOOLBAR);
+
         // TODO: consider re-ordering editor tabs to match selected files here?
+        // TODO: consider a sync option to sync editors with our list
 
         JScrollPane scroller = new JScrollPane();
         final JList list = new JList();
 
-
-        ListCellRenderer renderer = new XFilesRenderer();
+        ListCellRenderer renderer = new XFilesListCellRenderer();
         list.setCellRenderer(renderer);
-        
-        // TODO: need a custom list renderer that renders text according to file status colour
-        // might also want some icons in a gutter to indicate things?
+
+        // TODO: might want some icons in a gutter to indicate things?
         // for example a way to open or close selected files
 
         FileEditorManagerListener editorListener = new FileEditorManagerListener() {
             public void fileOpened(FileEditorManager source, VirtualFile file) {
+                // TODO: select this file if it's in our list
                 log.debug("file opened " + file.getName());
             }
 
             public void fileClosed(FileEditorManager source, VirtualFile file) {
+                // TODO: unselect this file if it's in our list
                 log.debug("file closed " + file.getName());
             }
 
@@ -89,11 +112,14 @@ public class XFilesToolWindow extends JPanel {
                     newFile = event.getNewFile().getName();
 
                 log.debug("selection changed: old file " + oldFile + " new file " + newFile);
+                // TODO: change the corresponding selections in our list
             }
         };
 
         final FileEditorManager editor = FileEditorManager.getInstance(project);
         editor.addFileEditorManagerListener(editorListener);
+
+        // TODO: construct the list cell renderer with the editor to deal with open/closed files
 
         //editor.closeFile();
 
@@ -134,6 +160,8 @@ public class XFilesToolWindow extends JPanel {
                     // except that the way to do this via the openapi is non-obvious
                     // just opening the file seems to work ok
 
+                    // TODO: only do this if scroll to source is on
+
                     editor.openFile(file, true);
                 }
             }
@@ -148,31 +176,6 @@ public class XFilesToolWindow extends JPanel {
         scroller.getViewport().setView(list);
 
         add(scroller, BorderLayout.CENTER);
-    }
-
-    class XFilesRenderer extends JLabel implements ListCellRenderer {
-        public XFilesRenderer() {
-            setOpaque(true);
-        }
-
-        public Component getListCellRendererComponent(JList list,
-                                                      Object value,
-                                                      int index,
-                                                      boolean isSelected,
-                                                      boolean cellHasFocus) {
-            VirtualFileAdapter adapter = (VirtualFileAdapter) value;
-            FileStatus status = adapter.getStatus();
-            setText(value.toString());
-
-            if (isSelected)
-                setBackground(list.getSelectionBackground());
-            else
-                setBackground(list.getBackground());
-
-            setForeground(status.getColor());
-
-            return this;
-        }
     }
 
 }

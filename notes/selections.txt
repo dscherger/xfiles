@@ -1,0 +1,90 @@
+the basic idea is for the xfiles panel to list files according to various
+configurable selections. examples might be things like:
+
+open files
+
+	- ask FileEditorManager isFileOpen(VirtualFile file)
+
+changed files
+unknown files
+added files
+deleted files
+missing files
+
+	- ask FileStatusManager for status and seeing if it's
+	  not modified (or perhaps in some selected list of status values)
+
+module's files
+
+	- compare module.getName() to specified glob
+
+source files
+test files
+java files
+non-java files
+
+	- ask ProjectFileIndex isInSource() isInTest(), isJavaSourceFile()
+	- ask FileTypeManager about types perhaps too?
+
+consider use cases from work where we want a notes view listing files in the
+notes module, a changed files view, a *Entry classes view, a *Transaction
+classes view, a *Assessor view, etc.
+
+ui for configuring filter needs something like the following:
+
+module		selected/any
+editor status	open/closed/any
+file status	unknown/ignored/missing/changed/added/deleted/unchanged/any
+file type	soure/test/java/text/any
+file name	glob
+
+seems like several checkbox groups for this
+
+xfiles panel then needs a combobox that lists configured selections by name
+and allows for switching selection (view) or editing the view configurations.
+consider the junit test configuration panel as an example, listing the known
+configurations and allowing them to be sorted, added, deleted, edited, etc.
+
+in terms of sorting probably by file type, then name with little endian class
+name sort for java class files
+
+it would be somewhat nice to also allow for a combobox on the main toolbar
+that lists open files 
+
+questions for jetbrains
+
+	- adding a combobox action
+	- using globbing on file/class/method names
+	- is getting a list of java files with compiler errors possible?
+
+	- getting list of all file status values?
+	- where is the none selection of displayed editor tabs headed?
+
+	- using the commit project things?
+	- annotations
+
+suggestions for more perforce integrations
+
+	- merging resolving? (should probably test this)
+	- persistent list of files in named changelists
+	- error message on commit when currently selected changelist has
+	  already been submitted
+	- some other way that commit to get into project diff panel
+
+filter configuration component
+
+	- list of named filters
+	- add/drop/copy/move up/move down on list
+	- name: ___
+	- module: _ aaa _ bbb _ ccc			(checkboxes)
+	- editor: _ open _ closed			(checkboxes)
+	- vcs status: _ unknown _ ignored ...		(checkboxes and named vcs)
+	- file classification: _ source _ test _ java _ text	(checkboxes not FileType instances perhaps classification)
+	- file type: _ java _ text _ ...		(checkboxes FileType instances)
+	- file name: ______				(glob)
+	- compile status: _ ok _ errors			(checkboxes)
+	- sort: type, name, status, module, ...		(table with sortable columns?)
+	- sync editor with selected files?		(single checkbox)
+	- ok, cancel, apply, help buttons
+	
+

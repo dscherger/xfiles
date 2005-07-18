@@ -32,6 +32,15 @@
     </module-components>
 
     <actions>
+        <!--
+        <action id="XFiles.Configurations" text="xfiles" description="xfiles configurations" icon="/general/comboArrow.png"
+            class="com.echologic.xfiles.FilterActionGroup" popup="true" />
+
+        <group id="XFiles.Group" popup="true" icon="/general/comboArrow.png" text="xfiles group" description="xfiles group description" >
+            <reference id="XFiles.Configurations"/>
+            <add-to-group group-id="MainToolBar" anchor="last"/>
+        </group>
+        -->
     </actions>
 
 </idea-plugin>

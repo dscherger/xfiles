@@ -2,10 +2,10 @@
 
 <project name="XFiles Plugin" default="all" basedir=".">
     <property file="build.properties"/>
-    <property name="idea.build.lib" value="${idea.dir}/redist"/>
     <property name="idea.lib" value="${idea.dir}/lib"/>
+    <property name="idea.redist" value="${idea.dir}/redist"/>
 
-    <taskdef name="javac2" classname="com.intellij.uiDesigner.ant.Javac2" classpath="${idea.build.lib}/javac2.jar"/>
+    <taskdef name="javac2" classname="com.intellij.uiDesigner.ant.Javac2" classpath="${idea.redist}/javac2.jar"/>
 
     <property name="plugin.name" value="xfiles"/>
 
