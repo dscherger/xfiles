@@ -5,12 +5,12 @@
  */
 package com.echologic.xfiles;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Collections;
+import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -31,7 +31,13 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatusFactory;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.peer.PeerFactory;
+import com.intellij.vcsUtil.VcsUtil;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -56,10 +62,10 @@ public class FilterAction extends AnAction {
     public void actionPerformed(AnActionEvent event) {
         log.debug("actionPerformed");
 
-        Project project = (Project) event.getDataContext().getData(DataConstants.PROJECT);
+        final Project project = (Project) event.getDataContext().getData(DataConstants.PROJECT);
 
         // various index methods that look interesting and possibly relevant
-        ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+        final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
 
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
         final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
@@ -128,13 +134,17 @@ public class FilterAction extends AnAction {
         // - missing files
         // - selection of roots?
 
-        final Map statusMap = new HashMap();
-        final List selected = new ArrayList();
+        final Map<String, FileStatus> statusMap = new HashMap<String, FileStatus>();
+        final List<VirtualFileAdapter> selected = new ArrayList<VirtualFileAdapter>();
 
         // TODO: perhaps one iterator over everything that collects details and then filter displayed
         // things from this list?
 
 
+        PeerFactory peerFactory = PeerFactory.getInstance();
+        final VcsContextFactory vcsContextFactory = peerFactory.getVcsContextFactory();
+
+        //
         ContentIterator content = new ContentIterator() {
             public boolean processFile(VirtualFile file) {
                 if (fileStatusManager != null) {
@@ -143,6 +153,16 @@ public class FilterAction extends AnAction {
                     FileStatus status = fileStatusManager.getStatus(file);
                     FileType type = fileTypeManager.getFileTypeByFile(file);
                     statusMap.put(status.getText(), status);
+
+                    FilePath path = vcsContextFactory.createFilePathOn(file);
+                    AbstractVcs vcs = VcsUtil.getVcsFor(project, path);
+
+                    log.debug(path.getPath() +
+                        " vcs " + vcs.getName() +
+                        " exists " + vcs.fileExistsInVcs(path) +
+                        " under " + vcs.fileIsUnderVcs(path));
+
+                    // TODO: might want unchanged files not under vcs control!?!
 
                     /*
                     log.debug(status.getText() + " " +
@@ -220,18 +240,22 @@ public class FilterAction extends AnAction {
         // nb: there seems to be no way to get the list of all file statuses in the 4.5.x openapi
         // I seem to recall that there is a getAllFileStatuses api in the 5.0 eap openapi?
 
-        log.debug("available file statuses");
+        log.debug("current file statuses");
 
         for (Iterator iterator = statusMap.keySet().iterator(); iterator.hasNext();) {
             String text = (String) iterator.next();
             FileStatus status = (FileStatus) statusMap.get(text);
             log.debug("status " + text + " is " + status);
-
         }
 
-        // this set of file statuses should be persisted in the workspace file (.iws)
-        // and only flushed when requested or something so that we can accumulate the
-        // complete list?!? although this is rather lame.
+        FileStatusFactory fileStatusFactory = peerFactory.getFileStatusFactory();
+        FileStatus[] statuses = fileStatusFactory.getAllFileStatuses();
 
+        log.debug("all file statuses");
+
+        for (int i = 0; i < statuses.length; i++) {
+            FileStatus status = statuses[i];
+            log.debug("status " + status.getText() + " is " + status);
+        }
     }
 }
