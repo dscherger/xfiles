@@ -10,7 +10,7 @@
     </description>
 
     <version>0.1</version>
-    <vendor url="http://www.echologic.com" email="derek@echologic.com">echologic software corporation</vendor>
+    <vendor url="http://www.echologic.com" email="derek@echologic.com">Derek Scherger</vendor>
     <change-notes>
         just getting started
     </change-notes>
@@ -32,15 +32,12 @@
     </module-components>
 
     <actions>
-        <!--
-        <action id="XFiles.Configurations" text="xfiles" description="xfiles configurations" icon="/general/comboArrow.png"
-            class="com.echologic.xfiles.FilterActionGroup" popup="true" />
+        <action id="XFiles.OpenFiles" text="open files" class="com.echologic.xfiles.OpenFilesComboBoxAction"/>
 
-        <group id="XFiles.Group" popup="true" icon="/general/comboArrow.png" text="xfiles group" description="xfiles group description" >
-            <reference id="XFiles.Configurations"/>
+        <group id="XFiles.Group" text="xfiles group">
+            <reference id="XFiles.OpenFiles"/>
             <add-to-group group-id="MainToolBar" anchor="last"/>
         </group>
-        -->
     </actions>
 
 </idea-plugin>

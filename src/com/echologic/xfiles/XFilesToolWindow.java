@@ -40,43 +40,20 @@ public class XFilesToolWindow extends JPanel {
         super(new BorderLayout());
         this.project = project;
 
-        AnAction aaa = new ConfigurableFilterAction("aaa", "AAA");
-        AnAction bbb = new ConfigurableFilterAction("bbb", "BBB");
-        AnAction ccc = new ConfigurableFilterAction("ccc", "CCC");
-
-        FilterActionGroup selections = new FilterActionGroup();
-        selections.add(aaa);
-        selections.add(bbb);
-        selections.addSeparator();
-        selections.add(ccc);
-
-        AnAction action = new FilterAction(model);
-        AnAction selected = new ConfigurableFilterAction("asdf", "asdf asdf");
+        AnAction filter = new FilterAction(model);
 
         AnAction scrollToSource = new ScrollToSourceAction();
         AnAction scrollFromSource = new ScrollFromSourceAction();
 
         DefaultActionGroup group = new DefaultActionGroup("xfiles group", false);
-        group.add(action);
-        group.add(selected);
+        group.add(filter);
         group.add(scrollToSource);
         group.add(scrollFromSource);
-        //group.add(selections);
 
         ActionManager actionManager = ActionManager.getInstance();
 
-        //ActionPopupMenu menu = actionManager.createActionPopupMenu("here", group);
-        //add(menu.getComponent(), BorderLayout.NORTH);
-
         ActionToolbar toolbar = actionManager.createActionToolbar("XFilesActionToolbar", group, true);
         add(toolbar.getComponent(), BorderLayout.NORTH);
-
-        //ActionPopupMenu menu = actionManager.createActionPopupMenu("XFilesActionToolbar", selections);
-        //ActionPopupMenu main = actionManager.createActionPopupMenu(ActionPlaces.MAIN_TOOLBAR, selections);
-
-        //ActionPopupMenu main = actionManager.createActionPopupMenu("MainToolBar", selections);
-
-        //PopupHandler.installPopupHandler(this, selections, "MainToolBar"); // not ActionPlaces.MAIN_TOOLBAR);
 
         // TODO: consider re-ordering editor tabs to match selected files here?
         // TODO: consider a sync option to sync editors with our list

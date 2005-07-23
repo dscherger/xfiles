@@ -155,12 +155,21 @@ public class FilterAction extends AnAction {
                     statusMap.put(status.getText(), status);
 
                     FilePath path = vcsContextFactory.createFilePathOn(file);
-                    AbstractVcs vcs = VcsUtil.getVcsFor(project, path);
 
-                    log.debug(path.getPath() +
-                        " vcs " + vcs.getName() +
-                        " exists " + vcs.fileExistsInVcs(path) +
-                        " under " + vcs.fileIsUnderVcs(path));
+                    if (path != null) {
+                        AbstractVcs vcs = VcsUtil.getVcsFor(project, path);
+
+                        if (vcs != null) {
+                            log.debug(path.getPath() +
+                                " vcs " + vcs.getName() +
+                                " exists " + vcs.fileExistsInVcs(path) +
+                                " under " + vcs.fileIsUnderVcs(path));
+                        } else {
+                            log.debug("null vcs for path " + path.getPath());
+                        }
+                    } else {
+                        log.debug("null path for file " + file.getPath());
+                    }
 
                     // TODO: might want unchanged files not under vcs control!?!
 
