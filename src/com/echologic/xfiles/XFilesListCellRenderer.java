@@ -16,7 +16,7 @@ import com.intellij.openapi.vcs.FileStatus;
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
-public class XFilesListCellRenderer extends JLabel implements ListCellRenderer{
+public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
 
     public XFilesListCellRenderer() {
         setOpaque(true);

@@ -5,18 +5,15 @@
  */
 package com.echologic.xfiles;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.util.Iterator;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -31,8 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
-public class OpenFilesComboBoxAction extends ComboBoxAction
-    implements ProjectManagerListener, FileEditorManagerListener
+public class OpenFilesComboBoxAction extends AnAction
+    implements ProjectManagerListener, CustomComponentAction, FileEditorManagerListener, ActionListener
 {
 
     private static Logger log = Logger.getInstance(OpenFilesComboBoxAction.class.getName());
@@ -40,36 +37,31 @@ public class OpenFilesComboBoxAction extends ComboBoxAction
     private FileStatusManager fileStatusManager;
     private FileEditorManager fileEditorManager;
 
-    private ComboBoxButton button;
-    private Presentation presentation;
-
-    private SortedSet openFileSet = new TreeSet();
-    private DefaultActionGroup group;
+    private JComboBox comboBox;
+    private OpenFilesComboBoxModel model;
 
     public OpenFilesComboBoxAction() {
+        log.debug("constructed");
         ProjectManager projectManager = ProjectManager.getInstance();
         projectManager.addProjectManagerListener(this);
-        log.debug("constructed");
     }
+
+    /**
+     * This method is not expected to be called.
+     */
+    public void actionPerformed(AnActionEvent e) {
+        log.debug("actionPerformed from " + e.getPlace());
+    }
+
+    // ProjectManagerListener methods
 
     public void projectOpened(Project project) {
         log.debug("projectOpened " + project.getName());
 
         fileEditorManager = FileEditorManager.getInstance(project);
         fileStatusManager = FileStatusManager.getInstance(project);
+
         fileEditorManager.addFileEditorManagerListener(this);
-
-        group = new DefaultActionGroup();
-
-        VirtualFile[] files = fileEditorManager.getOpenFiles();
-
-        for (int i = 0; i < files.length; i++) {
-            VirtualFile file = files[i];
-            FileStatus status = fileStatusManager.getStatus(file);
-            OpenFileAction action = new OpenFileAction(file, status);
-            openFileSet.add(action);
-            log.debug("open file " + file.getName() + " " + status.getText() + "/" + status);
-        }
     }
 
     public boolean canCloseProject(Project project) {
@@ -86,57 +78,49 @@ public class OpenFilesComboBoxAction extends ComboBoxAction
 
         fileEditorManager = null;
         fileStatusManager = null;
+
         log.debug("projectClosed " + project.getName());
     }
+
+    // CustomComponentAction methods
 
     public JComponent createCustomComponent(Presentation presentation) {
         log.debug("createCustomComponent");
 
-        this.presentation = presentation;
-        JPanel panel = new JPanel(new GridBagLayout());
-        button = new ComboBoxButton(presentation);
-        panel.add(button,
-                  new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 3, 0, 3), 0, 0)
-        );
-        return panel;
+        model = new OpenFilesComboBoxModel();
+        comboBox = new JComboBox(model);
+        comboBox.setFocusable(false);
+        comboBox.setMaximumRowCount(50);
+        comboBox.setRenderer(new XFilesListCellRenderer());
+        comboBox.addActionListener(this);
+        return comboBox;
     }
 
-    protected DefaultActionGroup createPopupActionGroup(JComponent component) {
-        log.debug("createPopupActionGroup: "  + group.getChildrenCount());
-
-        VirtualFile[] files = fileEditorManager.getSelectedFiles();
-
-        // TODO: not sure what to do with multiple files open?!?
-        if (files.length > 0) this.button.setText(files[0].getName());
-
-        return group;
-    }
+    // FileEditorManager methods
 
     public void fileOpened(FileEditorManager source, VirtualFile file) {
         log.debug("file opened " + file.getName());
+
         if (fileStatusManager == null) return;
 
         FileStatus status = fileStatusManager.getStatus(file);
-        OpenFileAction action = new OpenFileAction(file, status);
-        openFileSet.add(action);
-        presentation.setText(file.getName());
-        update();
+        VirtualFileAdapter adapter = new VirtualFileAdapter(file, status);
+        model.addElement(adapter);
     }
 
     public void fileClosed(FileEditorManager source, VirtualFile file) {
         log.debug("file closed " + file.getName());
+
         if (fileStatusManager == null) return;
 
         FileStatus status = fileStatusManager.getStatus(file);
-        OpenFileAction action = new OpenFileAction(file, status);
-        openFileSet.remove(action);
-        presentation.setText(file.getName());
-        update();
+        VirtualFileAdapter adapter = new VirtualFileAdapter(file, status);
+        model.removeElement(adapter);
     }
 
     public void selectionChanged(FileEditorManagerEvent event) {
-        String oldFile = "";
-        String newFile = "";
+        String oldFile = null;
+        String newFile = null;
 
         if (event.getOldFile() != null)
             oldFile = event.getOldFile().getName();
@@ -145,26 +129,30 @@ public class OpenFilesComboBoxAction extends ComboBoxAction
             newFile = event.getNewFile().getName();
 
         log.debug("selection changed: old file " + oldFile + " new file " + newFile);
-        presentation.setText(newFile);
-        update();
-    }
 
-    private void update() {
-        group.removeAll();
-
-        if (!openFileSet.isEmpty()) {
-            OpenFileAction last = (OpenFileAction) openFileSet.first();
-
-            for (Iterator iterator = openFileSet.iterator(); iterator.hasNext();) {
-                OpenFileAction action = (OpenFileAction) iterator.next();
-                if (last.getType() != action.getType()) group.addSeparator();
-                last = action;
-                group.add(action);
-                log.debug("refresh " + action.getName());
-            }
+        if (newFile != null) {
+            FileStatus status = fileStatusManager.getStatus(event.getNewFile());
+            VirtualFileAdapter adapter = new VirtualFileAdapter(event.getNewFile(), status);
+            model.setSelectedItem(adapter);
         }
     }
 
+    // ActionListener methods
+
+    /**
+     * This method is called by the open files combobox when a new file is selected. This
+     * selection is passed on to the underlying FileEditorManager to select the specified
+     * file.
+     */
+    public void actionPerformed(ActionEvent event) {
+        VirtualFileAdapter adapter = (VirtualFileAdapter) model.getSelectedItem();
+        if (adapter != null) {
+            log.debug("actionPerformed: event=" + event + " file=" + adapter.getName());
+            fileEditorManager.openFile(adapter.getFile(), true);
+        } else {
+            log.debug("actionPerformed: event=" + event);
+        }
+    }
 }
 
 

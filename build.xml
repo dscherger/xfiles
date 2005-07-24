@@ -50,9 +50,9 @@
         <!--source="1.5"-->
         <javac2
             destdir="${dir.dest.classes}"
-            debug="on"
+            debug="true"
             includeAntRuntime="no"
-            verbose="true"
+            verbose="false"
             fork="true">
             <compilerarg value="-J-Xbootclasspath/p:${idea.lib}/generics/gjc-rt.jar"/>
             <compilerarg value="-J-Xmx256m"/>

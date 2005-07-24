@@ -41,12 +41,13 @@ public class XFilesToolWindow extends JPanel {
         this.project = project;
 
         AnAction filter = new FilterAction(model);
-
+        AnAction selections = new FilterSelectionComboBoxAction();
         AnAction scrollToSource = new ScrollToSourceAction();
         AnAction scrollFromSource = new ScrollFromSourceAction();
 
         DefaultActionGroup group = new DefaultActionGroup("xfiles group", false);
         group.add(filter);
+        group.add(selections);
         group.add(scrollToSource);
         group.add(scrollFromSource);
 

@@ -42,6 +42,7 @@ import com.intellij.vcsUtil.VcsUtil;
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
+
 public class FilterAction extends AnAction {
 
     private Logger log = Logger.getInstance(getClass().getName());
