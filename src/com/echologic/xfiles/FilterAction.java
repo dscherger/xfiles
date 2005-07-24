@@ -52,12 +52,8 @@ public class FilterAction extends AnAction {
     private DefaultListModel model;
 
     public FilterAction(DefaultListModel model) {
-        super("filter", "filter files", icon);
+        super("refresh filter", "refresh filter", icon);
         this.model = model;
-    }
-
-    public boolean displayTextInToolbar() {
-        return true;
     }
 
     public void actionPerformed(AnActionEvent event) {
@@ -212,7 +208,7 @@ public class FilterAction extends AnAction {
                         !statusCode.equals("UNCHANGED") &&
                         !statusCode.equals("EXTERNAL"))
                     {
-                        VirtualFileAdapter adapter = new VirtualFileAdapter(file, status, type);
+                        VirtualFileAdapter adapter = new VirtualFileAdapter(file);
                         selected.add(adapter);
                     }
                 }

@@ -5,10 +5,9 @@
  */
 package com.echologic.xfiles;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -16,29 +15,19 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 public class VirtualFileAdapter implements Comparable {
 
     private VirtualFile file;
-    private FileStatus status;
     private FileType type;
     private String name;
     private String path;
 
-    public VirtualFileAdapter(VirtualFile file, FileStatus status) {
-        this(file, status, file.getFileType());
-    }
-
-    public VirtualFileAdapter(VirtualFile file, FileStatus status, FileType type) {
+    public VirtualFileAdapter(VirtualFile file) {
         this.file = file;
-        this.status = status;
-        this.type = type;
+        this.type = file.getFileType();
         this.name = file.getName();
         this.path = file.getPath();
     }
 
     public VirtualFile getFile() {
         return file;
-    }
-
-    public FileStatus getStatus() {
-        return status;
     }
 
     public FileType getType() {
@@ -67,8 +56,7 @@ public class VirtualFileAdapter implements Comparable {
     }
 
     public String toString() {
-        // TODO: suppress file extensions
-        return file.getName() + " [" + status.getText() + "]";
+        return file.getNameWithoutExtension();
     }
 
     public boolean equals(Object o) {

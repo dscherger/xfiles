@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
  */
 public class FilterSelectionAction extends AnAction {
 
-    public static final Icon ICON = new ImageIcon(ConfigurableFilterAction.class.getResource("/runConfigurations/hidePassed.png"));
+    public static final Icon ICON = new ImageIcon(FilterSelectionAction.class.getResource("/runConfigurations/hidePassed.png"));
 
     public FilterSelectionAction(String name) {
         super(name, "description", ICON);

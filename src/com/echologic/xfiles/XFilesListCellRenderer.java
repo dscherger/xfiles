@@ -12,13 +12,17 @@ import javax.swing.ListCellRenderer;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
 public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
 
-    public XFilesListCellRenderer() {
+    private FileStatusManager fileStatusManager;
+
+    public XFilesListCellRenderer(FileStatusManager fileStatusManager) {
+        this.fileStatusManager = fileStatusManager;
         setOpaque(true);
     }
 
@@ -28,25 +32,18 @@ public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
         VirtualFileAdapter adapter = (VirtualFileAdapter) value;
-        //VirtualFile file = adapter.getFile();
-
-        // TODO: we might want to contain several icons and a label?
-        // in case we want to indicate whether a file is open or not
-        // and allow open/close with specific clicks rather than on selection
-
-        //fileEditorManager.isFileOpen(file);
-        FileStatus status = adapter.getStatus();
         FileType type = adapter.getType();
 
         setText(adapter.toString());
         setIcon(type.getIcon());
 
+        FileStatus status = fileStatusManager.getStatus(adapter.getFile());
+        setForeground(status.getColor());
+
         if (isSelected)
             setBackground(list.getSelectionBackground());
         else
             setBackground(list.getBackground());
-
-        setForeground(status.getColor());
 
         return this;
     }

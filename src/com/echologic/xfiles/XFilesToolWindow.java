@@ -24,8 +24,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FileStatusManager;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -62,7 +62,8 @@ public class XFilesToolWindow extends JPanel {
         JScrollPane scroller = new JScrollPane();
         final JList list = new JList();
 
-        ListCellRenderer renderer = new XFilesListCellRenderer();
+        FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+        ListCellRenderer renderer = new XFilesListCellRenderer(fileStatusManager);
         list.setCellRenderer(renderer);
 
         // TODO: might want some icons in a gutter to indicate things?
@@ -130,9 +131,8 @@ public class XFilesToolWindow extends JPanel {
                     }
 
                     VirtualFile file = adapter.getFile();
-                    FileStatus status = adapter.getStatus();
 
-                    log.debug("selected " + status + " file " + file);
+                    log.debug("selected " + file);
 
                     // TODO: really we should open the file if it's closed or else select it if its already open
                     // except that the way to do this via the openapi is non-obvious

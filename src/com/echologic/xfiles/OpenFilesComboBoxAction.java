@@ -21,8 +21,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -62,6 +62,8 @@ public class OpenFilesComboBoxAction extends AnAction
         fileStatusManager = FileStatusManager.getInstance(project);
 
         fileEditorManager.addFileEditorManagerListener(this);
+
+        comboBox.setRenderer(new XFilesListCellRenderer(fileStatusManager));
     }
 
     public boolean canCloseProject(Project project) {
@@ -85,14 +87,22 @@ public class OpenFilesComboBoxAction extends AnAction
     // CustomComponentAction methods
 
     public JComponent createCustomComponent(Presentation presentation) {
-        log.debug("createCustomComponent");
 
-        model = new OpenFilesComboBoxModel();
-        comboBox = new JComboBox(model);
-        comboBox.setFocusable(false);
-        comboBox.setMaximumRowCount(50);
-        comboBox.setRenderer(new XFilesListCellRenderer());
-        comboBox.addActionListener(this);
+        if (comboBox == null) {
+            log.debug("createCustomComponent: creating new component");
+            model = new OpenFilesComboBoxModel();
+            comboBox = new JComboBox(model);
+            comboBox.setFocusable(false);
+            comboBox.setMaximumRowCount(50);
+            comboBox.addActionListener(this);
+            comboBox.setActionCommand("select-file");
+
+            // TODO: consider another tool bar action to close the currently open file?!?
+            // not sure this is useful... really want close on various open tabs
+        } else {
+            log.debug("createCustomComponent: reusing existing component");
+        }
+
         return comboBox;
     }
 
@@ -100,21 +110,13 @@ public class OpenFilesComboBoxAction extends AnAction
 
     public void fileOpened(FileEditorManager source, VirtualFile file) {
         log.debug("file opened " + file.getName());
-
-        if (fileStatusManager == null) return;
-
-        FileStatus status = fileStatusManager.getStatus(file);
-        VirtualFileAdapter adapter = new VirtualFileAdapter(file, status);
+        VirtualFileAdapter adapter = new VirtualFileAdapter(file);
         model.addElement(adapter);
     }
 
     public void fileClosed(FileEditorManager source, VirtualFile file) {
         log.debug("file closed " + file.getName());
-
-        if (fileStatusManager == null) return;
-
-        FileStatus status = fileStatusManager.getStatus(file);
-        VirtualFileAdapter adapter = new VirtualFileAdapter(file, status);
+        VirtualFileAdapter adapter = new VirtualFileAdapter(file);
         model.removeElement(adapter);
     }
 
@@ -131,8 +133,7 @@ public class OpenFilesComboBoxAction extends AnAction
         log.debug("selection changed: old file " + oldFile + " new file " + newFile);
 
         if (newFile != null) {
-            FileStatus status = fileStatusManager.getStatus(event.getNewFile());
-            VirtualFileAdapter adapter = new VirtualFileAdapter(event.getNewFile(), status);
+            VirtualFileAdapter adapter = new VirtualFileAdapter(event.getNewFile());
             model.setSelectedItem(adapter);
         }
     }
@@ -147,12 +148,16 @@ public class OpenFilesComboBoxAction extends AnAction
     public void actionPerformed(ActionEvent event) {
         VirtualFileAdapter adapter = (VirtualFileAdapter) model.getSelectedItem();
         if (adapter != null) {
-            log.debug("actionPerformed: event=" + event + " file=" + adapter.getName());
-            fileEditorManager.openFile(adapter.getFile(), true);
+            log.debug("actionPerformed: command " + event.getActionCommand() + "; file" + adapter.getName());
+            VirtualFile file = adapter.getFile();
+            fileEditorManager.openFile(file, true);
+            FileStatus status = fileStatusManager.getStatus(file);
+            comboBox.setToolTipText("[" + status.getText() + "/" + status + "] " + file.getPath());
         } else {
-            log.debug("actionPerformed: event=" + event);
+            log.debug("actionPerformed: command " + event.getActionCommand());
         }
     }
+
 }
 
 
