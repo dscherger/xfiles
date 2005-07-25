@@ -108,11 +108,11 @@ public class XFilesToolWindow extends JPanel {
                     int first = e.getFirstIndex();
                     int last = e.getLastIndex();
 
-                    VirtualFileAdapter adapter = null;
+                    VirtualFile file = null;
                     if (list.isSelectedIndex(first) && list.isSelectedIndex(last)) {
                         if (first == last) {
                             log.debug("selected " + first);
-                            adapter = (VirtualFileAdapter) model.get(first);
+                            file = (VirtualFile) model.get(first);
                         } else {
                             log.debug("both selected " + first + ", " + last);
                             return;
@@ -120,17 +120,15 @@ public class XFilesToolWindow extends JPanel {
                     } else if (list.isSelectedIndex(first)) {
                         log.debug("selected " + first);
                         log.debug("unselected " + last);
-                        adapter = (VirtualFileAdapter) model.get(first);
+                        file = (VirtualFile) model.get(first);
                     } else if (list.isSelectedIndex(last)) {
                         log.debug("unselected " + first);
                         log.debug("selected " + last);
-                        adapter = (VirtualFileAdapter) model.get(last);
+                        file = (VirtualFile) model.get(last);
                     } else {
                         log.debug("none selected " + first + ", " + last);
                         return;
                     }
-
-                    VirtualFile file = adapter.getFile();
 
                     log.debug("selected " + file);
 

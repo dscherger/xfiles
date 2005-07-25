@@ -34,9 +34,9 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
 
         group = new DefaultActionGroup();
 
-        group.add(new FilterSelectionAction("text files"));
-        group.add(new FilterSelectionAction("changed files"));
-        group.add(new FilterSelectionAction("open files"));
+        group.add(new FilterSelectionAction(this, "text files"));
+        group.add(new FilterSelectionAction(this, "changed files"));
+        group.add(new FilterSelectionAction(this, "open files"));
         group.addSeparator();
         group.add(new FilterConfigurationAction());
 
@@ -45,9 +45,12 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
 
     public JComponent createCustomComponent(Presentation presentation) {
         this.presentation = presentation;
-        presentation.setText("selected filter");
-        presentation.setDescription("change/configure filter selection");
+        presentation.setDescription("change/configure filter selections");
 
         return super.createCustomComponent(presentation);
+    }
+
+    public void setText(String text) {
+        presentation.setText(text);
     }
 }

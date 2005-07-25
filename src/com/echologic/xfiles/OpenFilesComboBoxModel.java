@@ -11,13 +11,16 @@ import java.util.Collections;
 import javax.swing.AbstractListModel;
 import javax.swing.MutableComboBoxModel;
 
+import com.intellij.openapi.vfs.VirtualFile;
+
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
 public class OpenFilesComboBoxModel extends AbstractListModel implements MutableComboBoxModel {
 
+    private VirtualFileComparator comparator = new VirtualFileComparator();
     private List files = new ArrayList();
-    int selected = -1;
+    private int selected = -1;
 
     public int getSize() {
         return files.size();
@@ -35,10 +38,10 @@ public class OpenFilesComboBoxModel extends AbstractListModel implements Mutable
      * @param element
      */
     public void addElement(Object element) {
-        VirtualFileAdapter adapter = (VirtualFileAdapter) element;
+        VirtualFile file = (VirtualFile) element;
 
         // add element in sorted position
-        int index = Collections.binarySearch(files, adapter);
+        int index = Collections.binarySearch(files, file, comparator);
 
         if (index < 0) {
             index = -index - 1;

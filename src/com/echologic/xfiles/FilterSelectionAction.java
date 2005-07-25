@@ -10,6 +10,7 @@ import javax.swing.ImageIcon;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * This class represents selection of a named filter configuration from the list
@@ -21,14 +22,40 @@ public class FilterSelectionAction extends AnAction {
 
     public static final Icon ICON = new ImageIcon(FilterSelectionAction.class.getResource("/runConfigurations/hidePassed.png"));
 
-    public FilterSelectionAction(String name) {
+    private static Logger log = Logger.getInstance(OpenFilesComboBoxAction.class.getName());
+
+    private String name;
+    private FilterSelectionComboBoxAction selection;
+
+    public FilterSelectionAction(FilterSelectionComboBoxAction selection, String name) {
         super(name, "description", ICON);
+        this.selection = selection;
+        this.name = name;
     }
 
     /**
-     * When a selection is made we need to update the text in the FilterSelectionComboBoxAction
-     * and rerun the FilterAction with the selected filter.
+     * When a filter is selected we update the text of the FilterSelectionComboBoxAction and then
+     * run the FilterAction with the selected filter.
+     *
+     * - persist each configured filter
+     * - persist which filter is currently selected
+     * - need working copies of filters when configuring so we can apply or cancel
+     *
+     * - need connections between list of filters, filter selection, filter configuration,
+     *   and filter execution
+     *
+     * - filter configuration
+     *      - add/edit/delete filters to list of configured filters
+     * - filter selection
+     *      - change currently selected filter
+     *      - execute selected filter when selection changes
+     * - filter execution
+     *      - execute currently selected filter
      */
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(AnActionEvent event) {
+        log.debug("selected filter " + name);
+        selection.setText(name);
+        // TODO: we need to set the text in the selection drop down to the selected filter
+        // TODO: and we need to run the filter to update the displayed list of files
     }
 }

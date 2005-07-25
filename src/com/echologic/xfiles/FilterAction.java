@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -50,6 +51,7 @@ public class FilterAction extends AnAction {
     private static Icon icon = new ImageIcon(FilterAction.class.getResource("/actions/sync.png"));
 
     private DefaultListModel model;
+    private Comparator comparator = new VirtualFileComparator();
 
     public FilterAction(DefaultListModel model) {
         super("refresh filter", "refresh filter", icon);
@@ -132,11 +134,10 @@ public class FilterAction extends AnAction {
         // - selection of roots?
 
         final Map<String, FileStatus> statusMap = new HashMap<String, FileStatus>();
-        final List<VirtualFileAdapter> selected = new ArrayList<VirtualFileAdapter>();
+        final List<VirtualFile> selected = new ArrayList<VirtualFile>();
 
         // TODO: perhaps one iterator over everything that collects details and then filter displayed
         // things from this list?
-
 
         PeerFactory peerFactory = PeerFactory.getInstance();
         final VcsContextFactory vcsContextFactory = peerFactory.getVcsContextFactory();
@@ -148,7 +149,6 @@ public class FilterAction extends AnAction {
                     //String node = file.isDirectory() ? "directory " : "file ";
 
                     FileStatus status = fileStatusManager.getStatus(file);
-                    FileType type = fileTypeManager.getFileTypeByFile(file);
                     statusMap.put(status.getText(), status);
 
                     FilePath path = vcsContextFactory.createFilePathOn(file);
@@ -208,9 +208,16 @@ public class FilterAction extends AnAction {
                         !statusCode.equals("UNCHANGED") &&
                         !statusCode.equals("EXTERNAL"))
                     {
-                        VirtualFileAdapter adapter = new VirtualFileAdapter(file);
-                        selected.add(adapter);
+                        selected.add(file);
                     }
+
+                    // for name matches we can use reges or globs (allowing only * chars)
+                    // where foo*a*b*bar is evaluated with
+                    // startsWith("foo")
+                    // indexOf("a") > 0
+                    // indexOf("b") > indexOf("a")
+                    // endsWith("bar")
+                    
                 }
                 return true;
             }
@@ -235,16 +242,20 @@ public class FilterAction extends AnAction {
 
         // TODO: the collected list should be run through the selected filter which should
         // define the sort order explicitly
-        Collections.sort(selected);
+
+        Collections.sort(selected, comparator);
 
         model.clear();
         for (Iterator iterator = selected.iterator(); iterator.hasNext();) {
-            VirtualFileAdapter adapter = (VirtualFileAdapter) iterator.next();
-            model.addElement(adapter);
+            VirtualFile file = (VirtualFile) iterator.next();
+            model.addElement(file);
         }
 
         // nb: there seems to be no way to get the list of all file statuses in the 4.5.x openapi
         // I seem to recall that there is a getAllFileStatuses api in the 5.0 eap openapi?
+
+        // there is, but it reports statuses from several vcs's ... how about displaying
+        // counts of files in each status when configuring?
 
         log.debug("current file statuses");
 

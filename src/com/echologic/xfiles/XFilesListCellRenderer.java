@@ -13,6 +13,7 @@ import javax.swing.ListCellRenderer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -31,13 +32,13 @@ public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
-        VirtualFileAdapter adapter = (VirtualFileAdapter) value;
-        FileType type = adapter.getType();
+        VirtualFile file = (VirtualFile) value;
+        FileType type = file.getFileType();
 
-        setText(adapter.toString());
+        setText(file.getNameWithoutExtension());
         setIcon(type.getIcon());
 
-        FileStatus status = fileStatusManager.getStatus(adapter.getFile());
+        FileStatus status = fileStatusManager.getStatus(file);
         setForeground(status.getColor());
 
         if (isSelected)

@@ -110,14 +110,12 @@ public class OpenFilesComboBoxAction extends AnAction
 
     public void fileOpened(FileEditorManager source, VirtualFile file) {
         log.debug("file opened " + file.getName());
-        VirtualFileAdapter adapter = new VirtualFileAdapter(file);
-        model.addElement(adapter);
+        model.addElement(file);
     }
 
     public void fileClosed(FileEditorManager source, VirtualFile file) {
         log.debug("file closed " + file.getName());
-        VirtualFileAdapter adapter = new VirtualFileAdapter(file);
-        model.removeElement(adapter);
+        model.removeElement(file);
     }
 
     public void selectionChanged(FileEditorManagerEvent event) {
@@ -133,8 +131,7 @@ public class OpenFilesComboBoxAction extends AnAction
         log.debug("selection changed: old file " + oldFile + " new file " + newFile);
 
         if (newFile != null) {
-            VirtualFileAdapter adapter = new VirtualFileAdapter(event.getNewFile());
-            model.setSelectedItem(adapter);
+            model.setSelectedItem(event.getNewFile());
         }
     }
 
@@ -146,10 +143,9 @@ public class OpenFilesComboBoxAction extends AnAction
      * file.
      */
     public void actionPerformed(ActionEvent event) {
-        VirtualFileAdapter adapter = (VirtualFileAdapter) model.getSelectedItem();
-        if (adapter != null) {
-            log.debug("actionPerformed: command " + event.getActionCommand() + "; file" + adapter.getName());
-            VirtualFile file = adapter.getFile();
+        VirtualFile file = (VirtualFile) model.getSelectedItem();
+        if (file != null) {
+            log.debug("actionPerformed: command " + event.getActionCommand() + "; file" + file.getName());
             fileEditorManager.openFile(file, true);
             FileStatus status = fileStatusManager.getStatus(file);
             comboBox.setToolTipText("[" + status.getText() + "/" + status + "] " + file.getPath());
