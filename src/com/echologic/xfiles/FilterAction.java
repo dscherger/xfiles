@@ -133,8 +133,8 @@ public class FilterAction extends AnAction {
         // - missing files
         // - selection of roots?
 
-        final Map<String, FileStatus> statusMap = new HashMap<String, FileStatus>();
-        final List<VirtualFile> selected = new ArrayList<VirtualFile>();
+        final Map statusMap = new HashMap();
+        final List selected = new ArrayList();
 
         // TODO: perhaps one iterator over everything that collects details and then filter displayed
         // things from this list?
@@ -152,9 +152,9 @@ public class FilterAction extends AnAction {
                     statusMap.put(status.getText(), status);
 
                     FilePath path = vcsContextFactory.createFilePathOn(file);
-
+		    AbstractVcs vcs = null;
                     if (path != null) {
-                        AbstractVcs vcs = VcsUtil.getVcsFor(project, path);
+                         vcs = VcsUtil.getVcsFor(project, path);
 
                         if (vcs != null) {
                             log.debug(path.getPath() +
@@ -205,8 +205,7 @@ public class FilterAction extends AnAction {
                     // this is monotone specific
                     String statusCode = status.toString();
                     if (!file.isDirectory() &&
-                        !statusCode.equals("UNCHANGED") &&
-                        !statusCode.equals("EXTERNAL"))
+			(vcs == null || (!statusCode.equals("NOT_CHANGED")) && !statusCode.equals("UNKNOWN")))
                     {
                         selected.add(file);
                     }

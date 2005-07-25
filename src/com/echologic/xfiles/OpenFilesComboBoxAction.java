@@ -148,7 +148,7 @@ public class OpenFilesComboBoxAction extends AnAction
             log.debug("actionPerformed: command " + event.getActionCommand() + "; file" + file.getName());
             fileEditorManager.openFile(file, true);
             FileStatus status = fileStatusManager.getStatus(file);
-            comboBox.setToolTipText("[" + status.getText() + "/" + status + "] " + file.getPath());
+            comboBox.setToolTipText("[" + status + "/" + status.getText() + "] " + file.getPath());
         } else {
             log.debug("actionPerformed: command " + event.getActionCommand());
         }

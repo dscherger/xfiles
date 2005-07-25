@@ -32,6 +32,8 @@ public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
+	if (value == null) return this;
+
         VirtualFile file = (VirtualFile) value;
         FileType type = file.getFileType();
 
@@ -45,6 +47,8 @@ public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
             setBackground(list.getSelectionBackground());
         else
             setBackground(list.getBackground());
+
+        setToolTipText("[" + status + "/" + status.getText() + "] " + file.getPath());
 
         return this;
     }
