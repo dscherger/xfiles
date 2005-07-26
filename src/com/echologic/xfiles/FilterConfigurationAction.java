@@ -39,6 +39,10 @@ public class FilterConfigurationAction extends AnAction {
      *
      * then when this panel is applied update the filter selection action to include the
      * updated list of filters
+     *
+     * edit the FilterConfigurationList on the FilterConfigurationPanel
+     *
+     * FilterConfigurationList should implement ProjectComponent to be persisted in the workspace
      * 
      * @param e
      */

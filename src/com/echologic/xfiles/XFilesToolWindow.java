@@ -98,10 +98,6 @@ public class XFilesToolWindow extends JPanel {
         final FileEditorManager editor = FileEditorManager.getInstance(project);
         editor.addFileEditorManagerListener(editorListener);
 
-        // TODO: construct the list cell renderer with the editor to deal with open/closed files
-
-        //editor.closeFile();
-
         ListSelectionListener listener = new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {

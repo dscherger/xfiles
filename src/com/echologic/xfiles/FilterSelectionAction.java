@@ -51,6 +51,15 @@ public class FilterSelectionAction extends AnAction {
      *      - execute selected filter when selection changes
      * - filter execution
      *      - execute currently selected filter
+     *
+     * i.e.
+     * - select the filter configuration associated with this selection
+     * - then run the filter over the selected configuration
+     *
+     * so FilterSelectionAction's have associated FilterConfiguration's
+     * probably also have a FilterConfigurationPanel for the FilterConfigurationAction to use
+     * and a FilterConfigurationList that contains the various configurations in order
+     * which would be the thing we persist in the workspace file
      */
     public void actionPerformed(AnActionEvent event) {
         log.debug("selected filter " + name);

@@ -7,11 +7,11 @@ package com.echologic.xfiles;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Comparator;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -30,13 +30,14 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
 
@@ -60,6 +61,8 @@ public class FilterAction extends AnAction {
 
     public void actionPerformed(AnActionEvent event) {
         log.debug("actionPerformed");
+
+        long start = System.currentTimeMillis();
 
         final Project project = (Project) event.getDataContext().getData(DataConstants.PROJECT);
 
@@ -142,14 +145,19 @@ public class FilterAction extends AnAction {
         PeerFactory peerFactory = PeerFactory.getInstance();
         final VcsContextFactory vcsContextFactory = peerFactory.getVcsContextFactory();
 
-        //
+        final Counter contentCounter = new Counter();
+
         ContentIterator content = new ContentIterator() {
             public boolean processFile(VirtualFile file) {
                 if (fileStatusManager != null) {
                     //String node = file.isDirectory() ? "directory " : "file ";
 
                     FileStatus status = fileStatusManager.getStatus(file);
-                    statusMap.put(status.getText(), status);
+                    Counter counter = (Counter) statusMap.get(status);
+                    if (counter == null)
+                        statusMap.put(status, new Counter());
+                    else
+                        counter.increment();
 
                     FilePath path = vcsContextFactory.createFilePathOn(file);
 		    AbstractVcs vcs = null;
@@ -163,6 +171,7 @@ public class FilterAction extends AnAction {
                                 " under " + vcs.fileIsUnderVcs(path));
                         } else {
                             log.debug("null vcs for path " + path.getPath());
+                            // this appears to mean that there's no vcs responsible for the path
                         }
                     } else {
                         log.debug("null path for file " + file.getPath());
@@ -210,13 +219,14 @@ public class FilterAction extends AnAction {
                         selected.add(file);
                     }
 
+                    contentCounter.increment();
+
                     // for name matches we can use reges or globs (allowing only * chars)
                     // where foo*a*b*bar is evaluated with
                     // startsWith("foo")
                     // indexOf("a") > 0
                     // indexOf("b") > indexOf("a")
                     // endsWith("bar")
-                    
                 }
                 return true;
             }
@@ -259,19 +269,34 @@ public class FilterAction extends AnAction {
         log.debug("current file statuses");
 
         for (Iterator iterator = statusMap.keySet().iterator(); iterator.hasNext();) {
-            String text = (String) iterator.next();
-            FileStatus status = (FileStatus) statusMap.get(text);
-            log.debug("status " + text + " is " + status);
+            FileStatus status = (FileStatus) iterator.next();
+            Counter counter = (Counter) statusMap.get(status);
+            log.debug("status " + status.getText() + "/" + status + " counted " + counter.value() + " times");
         }
 
-        FileStatusFactory fileStatusFactory = peerFactory.getFileStatusFactory();
-        FileStatus[] statuses = fileStatusFactory.getAllFileStatuses();
+        // this turns out to be rather un-interesting since it includes SVN statuses
+        //FileStatusFactory fileStatusFactory = peerFactory.getFileStatusFactory();
+        //FileStatus[] statuses = fileStatusFactory.getAllFileStatuses();
 
-        log.debug("all file statuses");
+        long finish = System.currentTimeMillis();
+        long delta = finish - start;
 
-        for (int i = 0; i < statuses.length; i++) {
-            FileStatus status = statuses[i];
-            log.debug("status " + status.getText() + " is " + status);
+        WindowManager windowManager = WindowManager.getInstance();
+        StatusBar statusBar = windowManager.getStatusBar(project);
+        statusBar.setInfo("filter refreshed in " + delta + "ms; selected " + selected.size() + " files from " +
+            contentCounter.value() + " total under " + roots.length + " roots");
+    }
+
+    private class Counter {
+        int count = 0;
+        void increment() {
+            count++;
+        }
+        void reset() {
+            count = 0;
+        }
+        int value() {
+            return count;
         }
     }
 }
