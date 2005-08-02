@@ -76,15 +76,111 @@ filter configuration component
 	- list of named filters
 	- add/drop/copy/move up/move down on list
 	- name: ___
-	- module: _ aaa _ bbb _ ccc			(checkboxes)
-	- editor: _ open _ closed			(checkboxes)
-	- vcs status: _ unknown _ ignored ...		(checkboxes and named vcs)
-	- file classification: _ source _ test _ java _ text	(checkboxes not FileType instances perhaps classification)
-	- file type: _ java _ text _ ...		(checkboxes FileType instances)
+	- module: _ aaa _ bbb _ ccc			(checkboxes and counts of files)
+	- vcs status: _ unknown _ ignored ...		(checkboxes and named vcs and counts of files)
+	- file classification: _ source _ test _ java _ text	(checkboxes not FileType instances perhaps classification and counts of files)
+	- file type: _ java _ text _ ...		(checkboxes FileType instances and counts of files)
 	- file name: ______				(glob)
+	- editor: _ open _ closed			(checkboxes)
 	- compile status: _ ok _ errors			(checkboxes)
 	- sort: type, name, status, module, ...		(table with sortable columns?)
-	- sync editor with selected files?		(single checkbox)
+	- sync editor with selected files?		(single checkbox to open/close editor based on filter results)
 	- ok, cancel, apply, help buttons
 	
+more on configurations
 
+	- it seems like a prototype filter run before configuration would be useful
+	  to get the types, statuses, etc. currently available, and a count of files in each
+	- it seems that a table (JTable) with three columns (selected, type, count) for each
+	  different criteria would be good
+	- also a table of regex/glob patterns (assuming logical or between them?)
+	- it might also be useful to allow filters to be combined into groups to get logical or conditions
+	- perhaps rather than "selected" column an include/exclude column would be good?
+
+file statuses
+	45 unchanged	excluded
+	22 changed	included
+	 3 unknown	included
+	 4 missing	included
+
+file types
+	 3 properties	included
+	 5 text		included
+	66 java		included
+
+version control systems
+	10 <none>	included
+	70 monotone	included
+	 0 perforce
+	 0 cvs
+	 0 subversion
+
+project modules
+	foo
+	bar
+	baz
+
+other
+	ignored
+	sources
+	tests
+
+file names
+	*Entry		included
+	*EntryImpl	excluded
+
+note that items with zero counts should not be displayed displayed
+with the included/excluded settings, the logical condition would be something like
+
+	included-1 OR included-2 OR ... included-N
+			AND NOT
+	excluded-1 OR excluded-2 OR ... excluded-N
+
+this approach seems to obviate the need for filter grouping entirely.
+
+build the representation and evaluation stuff first and worry about the ui for configuration
+last, after the filter selection is done. i.e. just have some pre-defined filters based on
+this representation for now.
+
+fileStatus = file.getStatus();
+filterStatus = filter.getStatus(fileStatus);
+
+if (filterStatus.isIncluded())
+	included |= included
+else
+	excluded |= excluded;
+
+if (included && !excluded)
+	include
+else
+	exclude
+
+hmm... what about "unchanged excluded null vcs included" case?
+
+tri-states?
+i.e. unchanged is neither included or excluded
+       changed is included
+      null vcs is included
+
+not sure is complete or not, suspecting not however
+i.e. "changed java files and all text files" doesn't work
+
+basically an n-dimensional problem with and/or between each dimension
+however, "changed files and text files" might be a close approximation
+
+now wondering whether tri-state is valuable at all or if each type is
+simply included or not.
+i.e. unchanged not included
+       changed is included
+      null vcs is included
+
+performance-wise simple includes seems better as we can short-circuit as soon
+as a file is included. hmm... short-circuit excludes might actually be good for
+performance too as we can avoid later checks once a file is excluded.
+
+moral 1: premature optimizationn is the root of all evil -- ignore performance for now
+
+moral 2: simple is good -- include boolean to start and play with
+
+approach: build configurable base and pre-defined selectable configurations and
+worry about configuration ui later

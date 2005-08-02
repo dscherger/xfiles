@@ -20,26 +20,19 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.peer.PeerFactory;
-import com.intellij.vcsUtil.VcsUtil;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -66,43 +59,10 @@ public class FilterAction extends AnAction {
 
         final Project project = (Project) event.getDataContext().getData(DataConstants.PROJECT);
 
-        // various index methods that look interesting and possibly relevant
         final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-
-        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-        final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+        final ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
         final ProjectFileIndex index = projectRootManager.getFileIndex();
         final FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
-
-        VirtualFile[] files = fileEditorManager.getOpenFiles();
-
-        for (int i = 0; i < files.length; i++) {
-            VirtualFile file = files[i];
-            log.debug("open file " + file.getPath());
-        }
-
-        FileType[] registeredFileTypes = fileTypeManager.getRegisteredFileTypes();
-
-        for (int i = 0; i < registeredFileTypes.length; i++) {
-            FileType type = registeredFileTypes[i];
-            log.debug("file type " + i + " is " + type.getName() + "; " + type.getDescription());
-        }
-
-        ModuleManager moduleManager = ModuleManager.getInstance(project);
-        Module[] modules = moduleManager.getModules();
-
-        for (int i = 0; i < modules.length; i++) {
-            Module module = modules[i];
-            log.debug("module " + i + " is " + module.getName());
-            ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-            VirtualFile[] roots = moduleRootManager.getContentRoots();
-            for (int j = 0; j < roots.length; j++) {
-                VirtualFile root = roots[j];
-                log.debug(module.getName() + " root " + j + " is " + root.getPath());
-            }
-
-            //ModuleFileIndex moduleIndex = moduleRootManager.getFileIndex();
-        }
 
         // TODO: once a filter is defined we iterate over everything and see if it fits
         // if it does we add it to the list we're hopefully collecting
@@ -123,84 +83,76 @@ public class FilterAction extends AnAction {
         // all files like *Entry or Member*Entry (intellij must have globbing code somewhere -- oro?)
         // all files with compile errors (not sure if this is possible)
 
-        // TODO: add a dropdown menu to the toolbar with a sorted list of open files?
         // TODO: type: any/java/non-java
 
-        // ui should have a dropdown of defined filters to select one or create/edit/delete them
-        // also various sort options
-
-        // alternatively, how about we classify files into several different lists
-        // and then have different list selection buttons
-        // - open files
-        // - changed files
-        // - missing files
-        // - selection of roots?
-
         final Map statusMap = new HashMap();
+        final Map typeMap = new HashMap();
+        final Map vcsMap = new HashMap();
+        final Map moduleMap = new HashMap();
+
         final List selected = new ArrayList();
 
-        // TODO: perhaps one iterator over everything that collects details and then filter displayed
-        // things from this list?
+        final VirtualFileCounter allFiles = new VirtualFileCounter();
+        final VirtualFileCounter ignoredFiles = new VirtualFileCounter();
+        final VirtualFileCounter sourceFiles = new VirtualFileCounter();
+        final VirtualFileCounter testFiles = new VirtualFileCounter();
 
-        PeerFactory peerFactory = PeerFactory.getInstance();
-        final VcsContextFactory vcsContextFactory = peerFactory.getVcsContextFactory();
-
-        final Counter contentCounter = new Counter();
+        // TODO: XFilesContentIterator?
 
         ContentIterator content = new ContentIterator() {
             public boolean processFile(VirtualFile file) {
                 if (fileStatusManager != null) {
+                    // TODO: may want to count files and directories
                     //String node = file.isDirectory() ? "directory " : "file ";
 
                     FileStatus status = fileStatusManager.getStatus(file);
-                    Counter counter = (Counter) statusMap.get(status);
-                    if (counter == null)
-                        statusMap.put(status, new Counter());
-                    else
-                        counter.increment();
-
-                    FilePath path = vcsContextFactory.createFilePathOn(file);
-		    AbstractVcs vcs = null;
-                    if (path != null) {
-                         vcs = VcsUtil.getVcsFor(project, path);
-
-                        if (vcs != null) {
-                            log.debug(path.getPath() +
-                                " vcs " + vcs.getName() +
-                                " exists " + vcs.fileExistsInVcs(path) +
-                                " under " + vcs.fileIsUnderVcs(path));
-                        } else {
-                            log.debug("null vcs for path " + path.getPath());
-                            // this appears to mean that there's no vcs responsible for the path
-                        }
-                    } else {
-                        log.debug("null path for file " + file.getPath());
+                    VirtualFileCounter counter = (VirtualFileCounter) statusMap.get(status);
+                    if (counter == null) {
+                        counter = new VirtualFileCounter();
+                        statusMap.put(status, counter);
                     }
+                    counter.count(file);
 
-                    // TODO: might want unchanged files not under vcs control!?!
+                    FileType type = file.getFileType();
+                    counter = (VirtualFileCounter) typeMap.get(type);
+                    if (counter == null) {
+                        counter = new VirtualFileCounter();
+                        typeMap.put(type, counter);
+                    }
+                    counter.count(file);
 
-                    /*
-                    log.debug(status.getText() + " " +
-                              node + file.getPath() +
-                              " java " + index.isJavaSourceFile(file) +
-                              " open " + fileEditorManager.isFileOpen(file));
-                    */
+                    AbstractVcs vcs = projectLevelVcsManager.getVcsFor(file);
+                    String vcsName = "<None>";
 
-                    //VirtualFileIndexEntry entry = VirtualFileIndexEntry.getIndexEntry(file, index);
+                    if (vcs != null) vcsName = vcs.getName();
 
-                    /*
+                    counter = (VirtualFileCounter) vcsMap.get(vcsName);
+                    if (counter == null) {
+                        counter = new VirtualFileCounter();
+                        vcsMap.put(vcsName, counter);
+                    }
+                    counter.count(file);
+
                     // we may want all of the following, and the others that aren't listed as well?
-                    index.isContentJavaSourceFile()
-                    index.isIgnored()
-                    index.isInContent()
-                    index.isInLibraryClasses()
-                    index.isInLibrarySource()
-                    index.isInSource()
-                    index.isInSourceContent()
-                    index.isInTestSourceContent()
-                    index.isJavaSourceFile()
-                    index.isLibraryClassFile()
-                    */
+
+                    Module module = index.getModuleForFile(file);
+                    counter = (VirtualFileCounter) moduleMap.get(module);
+                    if (counter == null) {
+                        counter = new VirtualFileCounter();
+                        moduleMap.put(module, counter);
+                    }
+                    counter.count(file);
+
+                    if (index.isIgnored(file)) ignoredFiles.count(file);
+
+                    // note that SourceContent is a superset TestSourceContent
+
+                    if (index.isInTestSourceContent(file))
+                        testFiles.count(file);
+                    else if (index.isInSourceContent(file))
+                        sourceFiles.count(file);
+
+                    allFiles.count(file);
 
                     // TODO: consult a filter to decide whether we add this file or not
                     // filter defintion needs to contain
@@ -211,15 +163,15 @@ public class FilterAction extends AnAction {
                     // - file name glob:
                     // - compiler status: ok/errors/all
 
-                    // this is monotone specific
                     String statusCode = status.toString();
                     if (!file.isDirectory() &&
-			(vcs == null || (!statusCode.equals("NOT_CHANGED")) && !statusCode.equals("UNKNOWN")))
+                        (vcs == null || (!statusCode.equals("NOT_CHANGED")) &&
+                                         !statusCode.equals("UNCHANGED") &&
+                                         !statusCode.equals("UNKNOWN")))
                     {
                         selected.add(file);
                     }
 
-                    contentCounter.increment();
 
                     // for name matches we can use reges or globs (allowing only * chars)
                     // where foo*a*b*bar is evaluated with
@@ -234,13 +186,11 @@ public class FilterAction extends AnAction {
 
         VirtualFile[] roots = projectRootManager.getContentRoots();
 
-        log.debug("iterating content" +
-                  " under roots");
+        log.debug("iterating content under roots");
 
         for (int i = 0; i < roots.length; i++) {
             VirtualFile root = roots[i];
-            log.debug("root " + root.getPath() + " isInContent " + index.isInContent(root));
-
+            log.debug("root " + root.getPath());
             index.iterateContentUnderDirectory(root, content);
         }
 
@@ -266,37 +216,85 @@ public class FilterAction extends AnAction {
         // there is, but it reports statuses from several vcs's ... how about displaying
         // counts of files in each status when configuring?
 
-        log.debug("current file statuses");
+        log.debug("file statuses");
 
         for (Iterator iterator = statusMap.keySet().iterator(); iterator.hasNext();) {
             FileStatus status = (FileStatus) iterator.next();
-            Counter counter = (Counter) statusMap.get(status);
-            log.debug("status " + status.getText() + "/" + status + " counted " + counter.value() + " times");
+            VirtualFileCounter counter = (VirtualFileCounter) statusMap.get(status);
+            counter.log(status.getText());
         }
 
-        // this turns out to be rather un-interesting since it includes SVN statuses
-        //FileStatusFactory fileStatusFactory = peerFactory.getFileStatusFactory();
-        //FileStatus[] statuses = fileStatusFactory.getAllFileStatuses();
+        log.debug("file types");
+
+        for (Iterator iterator = typeMap.keySet().iterator(); iterator.hasNext();) {
+            FileType type = (FileType) iterator.next();
+            VirtualFileCounter counter = (VirtualFileCounter) typeMap.get(type);
+            counter.log(type.getDescription());
+        }
+
+        log.debug("version control systems");
+
+        for (Iterator iterator = vcsMap.keySet().iterator(); iterator.hasNext();) {
+            String name = (String) iterator.next();
+            VirtualFileCounter counter = (VirtualFileCounter) vcsMap.get(name);
+            counter.log(name);
+        }
+
+        log.debug("modules");
+
+        for (Iterator iterator = moduleMap.keySet().iterator(); iterator.hasNext();) {
+            Module module = (Module) iterator.next();
+            VirtualFileCounter counter = (VirtualFileCounter) moduleMap.get(module);
+            counter.log(module.getName());
+        }
+
+        ignoredFiles.log("ignored");
+        sourceFiles.log("source");
+        testFiles.log("test");
 
         long finish = System.currentTimeMillis();
         long delta = finish - start;
 
         WindowManager windowManager = WindowManager.getInstance();
         StatusBar statusBar = windowManager.getStatusBar(project);
-        statusBar.setInfo("filter refreshed in " + delta + "ms; selected " + selected.size() + " files from " +
-            contentCounter.value() + " total under " + roots.length + " roots");
+        statusBar.setInfo("filter refreshed in " + delta + "ms; " +
+            selected.size() + " selected files; " +
+            allFiles.size() + " total files; " +
+            sourceFiles.size() + " source files; " +
+            testFiles.size() + " test files; " +
+            ignoredFiles.size() + " ignored files; ");
+
+        // TODO: decide how to do logical combination of selection based on the information above
+        // i.e. if two statuses and two file types are selected for inclusion what is the expected result
+        // clearly, logical or between selections of the same type (file type, file status, etc.)
+        // but logical and/or between selections of different types might both be useful
+        // i.e. these statuses AND those types
+        //   vs these status OR those types
+
     }
 
-    private class Counter {
-        int count = 0;
-        void increment() {
-            count++;
+    private class VirtualFileCounter {
+
+        private List files = new ArrayList();
+
+        public void count(VirtualFile file) {
+            files.add(file);
         }
-        void reset() {
-            count = 0;
+
+        public int size() {
+            return files.size();
         }
-        int value() {
-            return count;
+
+        public List getFiles() {
+            return files;
+        }
+
+        public void log(String type) {
+            log.debug(files.size() + " " + type + " files");
+            for (Iterator iterator = files.iterator(); iterator.hasNext();) {
+                VirtualFile file = (VirtualFile) iterator.next();
+                log.debug(type + " " + file.getPath());
+            }
         }
     }
 }
