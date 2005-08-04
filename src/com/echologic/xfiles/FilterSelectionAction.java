@@ -27,12 +27,22 @@ public class FilterSelectionAction extends AnAction {
     private static Logger log = Logger.getInstance(OpenFilesComboBoxAction.class.getName());
 
     private String name;
-    private FilterSelectionComboBoxAction selection;
+    private FilterSelectionComboBoxAction combo;
+    private XFilesVirtualFileFilter filter;
 
-    public FilterSelectionAction(FilterSelectionComboBoxAction selection, String name) {
+    public FilterSelectionAction(FilterSelectionComboBoxAction combo, String name, XFilesVirtualFileFilter filter) {
         super(name, "description", ICON);
-        this.selection = selection;
+        this.combo = combo;
         this.name = name;
+        this.filter = filter;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public XFilesVirtualFileFilter getFilter() {
+        return filter;
     }
 
     /**
@@ -65,8 +75,8 @@ public class FilterSelectionAction extends AnAction {
      */
     public void actionPerformed(AnActionEvent event) {
         log.debug("selected filter " + name);
-        selection.setText(name);
-        // TODO: we need to set the text in the selection drop down to the selected filter
-        // TODO: and we need to run the filter to update the displayed list of files
+        combo.setSelected(this);
+
+        // TODO: could try passing in this event and running the filter
     }
 }

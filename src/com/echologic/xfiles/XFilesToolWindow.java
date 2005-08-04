@@ -40,8 +40,8 @@ public class XFilesToolWindow extends JPanel {
         super(new BorderLayout());
         this.project = project;
 
-        AnAction filter = new FilterAction(model);
-        AnAction selections = new FilterSelectionComboBoxAction();
+        FilterAction filter = new FilterAction(model);
+        AnAction selections = new FilterSelectionComboBoxAction(project, filter);
         AnAction scrollToSource = new ScrollToSourceAction();
         AnAction scrollFromSource = new ScrollFromSourceAction();
 

@@ -11,6 +11,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vcs.FileStatus;
 
 /**
  * This class represents a menu of available filter configurations to select from.
@@ -25,6 +28,44 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
 
     private DefaultActionGroup group;
     private Presentation presentation;
+    private FilterAction filterAction;
+
+    private XFilesVirtualFileFilter configFilter;
+    private XFilesVirtualFileFilter changedFilter;
+    private XFilesVirtualFileFilter textFilter;
+    private XFilesVirtualFileFilter ignoredFilter;
+    private XFilesVirtualFileFilter unknownFilter;
+
+    // TODO: hibernate mapping filter *.hbm.xml in build/mappings directory!?!
+
+    public FilterSelectionComboBoxAction(Project project, FilterAction filterAction) {
+        configFilter = new XFilesVirtualFileFilter(project);
+        configFilter.addAcceptedType(StdFileTypes.PROPERTIES);
+        configFilter.addAcceptedType(StdFileTypes.XML);
+        configFilter.addAcceptedType(StdFileTypes.DTD);
+
+        changedFilter = new XFilesVirtualFileFilter(project);
+        changedFilter.addAcceptedStatus(FileStatus.ADDED);
+        changedFilter.addAcceptedStatus(FileStatus.DELETED);
+        changedFilter.addAcceptedStatus(FileStatus.MODIFIED);
+
+        textFilter = new XFilesVirtualFileFilter(project);
+        textFilter.addAcceptedType(StdFileTypes.PLAIN_TEXT);
+
+        unknownFilter = new XFilesVirtualFileFilter(project);
+        unknownFilter.addAcceptedStatus(FileStatus.UNKNOWN);
+        unknownFilter.addAcceptedType(StdFileTypes.UNKNOWN);
+
+        ignoredFilter = new XFilesVirtualFileFilter(project);
+        ignoredFilter.setAcceptIgnored(true);
+
+        this.filterAction = filterAction;
+    }
+
+    public void setSelected(FilterSelectionAction selection) {
+        presentation.setText(selection.getName());
+        filterAction.setFilter(selection.getFilter());
+    }
 
     /**
      * Note that the only way the list of available FilterSelectionAction's can change
@@ -36,9 +77,11 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
 
         group = new DefaultActionGroup();
 
-        group.add(new FilterSelectionAction(this, "text files"));
-        group.add(new FilterSelectionAction(this, "changed files"));
-        group.add(new FilterSelectionAction(this, "open files"));
+        group.add(new FilterSelectionAction(this, "config files", configFilter));
+        group.add(new FilterSelectionAction(this, "changed files", changedFilter));
+        group.add(new FilterSelectionAction(this, "text files", textFilter));
+        group.add(new FilterSelectionAction(this, "ignored files", ignoredFilter));
+        group.add(new FilterSelectionAction(this, "unknown files", unknownFilter));
         group.addSeparator();
         group.add(new FilterConfigurationAction());
 
@@ -50,9 +93,5 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
         presentation.setDescription("change/configure filter selections");
 
         return super.createCustomComponent(presentation);
-    }
-
-    public void setText(String text) {
-        presentation.setText(text);
     }
 }

@@ -17,11 +17,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -40,14 +38,24 @@ public class FilterAction extends AnAction {
 
     private DefaultListModel model;
     private Comparator comparator = new VirtualFileComparator();
+    private XFilesVirtualFileFilter filter;
 
     public FilterAction(DefaultListModel model) {
         super("refresh filter", "refresh filter", icon);
         this.model = model;
     }
 
+    public void setFilter(XFilesVirtualFileFilter filter) {
+        this.filter = filter;
+    }
+
     public void actionPerformed(AnActionEvent event) {
         log.debug("actionPerformed");
+
+        if (filter == null) {
+            log.debug("no filter selected");
+            return;
+        }
 
         long start = System.currentTimeMillis();
 
@@ -66,14 +74,6 @@ public class FilterAction extends AnAction {
         VirtualFile[] roots = projectRootManager.getContentRoots();
 
         log.debug("iterating content under roots");
-
-        XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
-        filter.addAcceptedVcs(null);
-        filter.addAcceptedType(StdFileTypes.PROPERTIES);
-        filter.addAcceptedType(StdFileTypes.XML);
-        filter.addAcceptedStatus(FileStatus.ADDED);
-        filter.addAcceptedStatus(FileStatus.DELETED);
-        filter.addAcceptedStatus(FileStatus.MODIFIED);
 
         XFilesContentIterator content = new XFilesContentIterator(filter);
 

@@ -99,7 +99,6 @@ public class XFiles implements ProjectComponent {
         Icon icon = new ImageIcon(FilterAction.class.getResource("/objectBrowser/visibilitySort.png"));
         window.setIcon(icon);
         // TODO: assign hot key to activate window if that's even possible
-
     }
 
     private void unregisterToolWindow() {
