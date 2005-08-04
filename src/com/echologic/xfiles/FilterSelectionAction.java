@@ -17,6 +17,8 @@ import com.intellij.openapi.diagnostic.Logger;
  * of available configurations.
  * 
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
+ *
+ * TODO: rename to SelectFilterAction
  */
 public class FilterSelectionAction extends AnAction {
 

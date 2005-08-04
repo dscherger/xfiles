@@ -16,6 +16,8 @@ import com.intellij.openapi.diagnostic.Logger;
  * This class represents a menu of available filter configurations to select from.
  *
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
+ *
+ * TODO: rename to SelectFilterComboBoxAction
  */
 public class FilterSelectionComboBoxAction extends ComboBoxAction {
 
