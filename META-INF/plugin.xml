@@ -31,6 +31,15 @@
     <module-components>
     </module-components>
 
+    <!--
+    
+    the CustomComponent action interface really seems to have some problems with project level
+    components. calls to createCustomComponent don't specify for which projecft they are being
+    made and keeping track seems to be non-portable between linux and windows. for now the plan
+    is to have an open files filter in sync with open editors. it might actually be nice to
+    always see which files are open anyway. also this requires one less click to switch to another
+    open file and leaves the opportunity for a clickable "close this file" action on open files.
+
     <actions>
         <action id="XFiles.OpenFiles" text="open files" class="com.echologic.xfiles.OpenFilesComboBoxAction"/>
 
@@ -40,6 +49,7 @@
         </group>
 
     </actions>
+    -->
 
 </idea-plugin>
 

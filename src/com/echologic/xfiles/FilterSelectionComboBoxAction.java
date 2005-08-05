@@ -35,6 +35,7 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
     private XFilesVirtualFileFilter textFilter;
     private XFilesVirtualFileFilter ignoredFilter;
     private XFilesVirtualFileFilter unknownFilter;
+    private XFilesVirtualFileFilter openFilter;
 
     // TODO: hibernate mapping filter *.hbm.xml in build/mappings directory!?!
 
@@ -59,6 +60,9 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
         ignoredFilter = new XFilesVirtualFileFilter(project);
         ignoredFilter.setAcceptIgnored(true);
 
+        openFilter = new XFilesVirtualFileFilter(project);
+        openFilter.setAcceptOpen(true);
+
         this.filterAction = filterAction;
     }
 
@@ -82,6 +86,7 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
         group.add(new FilterSelectionAction(this, "text files", textFilter));
         group.add(new FilterSelectionAction(this, "ignored files", ignoredFilter));
         group.add(new FilterSelectionAction(this, "unknown files", unknownFilter));
+        group.add(new FilterSelectionAction(this, "open files", openFilter));
         group.addSeparator();
         group.add(new FilterConfigurationAction());
 

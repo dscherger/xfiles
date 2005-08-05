@@ -61,10 +61,7 @@ public class OpenFilesComboBoxModel extends AbstractListModel implements Mutable
      */
     public void removeElement(Object element) {
         int index = files.indexOf(element);
-        if (index >= 0) {
-            files.remove(index);
-        }
-        fireIntervalRemoved(this, index, index);
+        removeElementAt(index);
     }
 
     /**
@@ -78,16 +75,37 @@ public class OpenFilesComboBoxModel extends AbstractListModel implements Mutable
         throw new UnsupportedOperationException("insertElementAt");
     }
 
-    /**
-     * This method is unsupported in this implementation because it is not required by the
-     * associated action.
-     *
-     * @param index
-     */
     public void removeElementAt(int index) {
-        throw new UnsupportedOperationException("insertElementAt");
+        if (index >= 0) {
+            files.remove(index);
+            fireIntervalRemoved(this, index, index);
+        }
     }
 
+    /**
+     * Removes all of the elements from this list.  The list will
+     * be empty after this call returns (unless it throws an exception).
+     */
+    public void clear() {
+	int index = files.size()-1;
+	files.clear();
+	if (index >= 0) {
+	    fireIntervalRemoved(this, 0, index);
+	}
+    }
+
+    public boolean contains(Object element) {
+        return files.contains(element);
+    }
+
+    public int indexOf(Object element) {
+        return files.indexOf(element);
+    }
+
+    public int size() {
+        return files.size();
+    }
+    
     public void setSelectedItem(Object element) {
         setSelected(files.indexOf(element));
     }

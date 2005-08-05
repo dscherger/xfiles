@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -34,8 +35,9 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
     private ProjectRootManager rootManager;
     private ProjectLevelVcsManager vcsManager;
-    private FileStatusManager statusManager;
     private ProjectFileIndex fileIndex;
+    private FileStatusManager statusManager;
+    private FileEditorManager editorManager;
 
     private List acceptedStatusList = new ArrayList();
     private List acceptedTypeList = new ArrayList();
@@ -46,6 +48,7 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     private boolean acceptSources;
     private boolean acceptTests;
     private boolean acceptDirectories;
+    private boolean acceptOpen;
 
     private ListMap statusMap = new ListMap();
     private ListMap typeMap = new ListMap();
@@ -57,11 +60,14 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     private List ignored = new ArrayList();
     private List sources = new ArrayList();
     private List tests = new ArrayList();
+    private List open = new ArrayList();
 
     public XFilesVirtualFileFilter(Project project) {
         rootManager = ProjectRootManager.getInstance(project);
         vcsManager = ProjectLevelVcsManager.getInstance(project);
+
         statusManager = FileStatusManager.getInstance(project);
+        editorManager = FileEditorManager.getInstance(project);
 
         fileIndex = rootManager.getFileIndex();
     }
@@ -96,6 +102,10 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
     public void setAcceptDirectories(boolean b) {
         acceptDirectories = b;
+    }
+
+    public void setAcceptOpen(boolean b) {
+        acceptOpen = b;
     }
 
     public boolean accept(VirtualFile file) {
@@ -143,6 +153,11 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         } else {
             //accepted |= acceptFiles;
             files.add(file);
+        }
+
+        if (editorManager.isFileOpen(file)) {
+            accepted |= acceptOpen;
+            open.add(file);
         }
 
         return accepted;
@@ -203,11 +218,14 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     }
 
     public String toString() {
+        log();
+        
         return files.size() + " files; " +
             directories.size() + " directories; " +
+            ignored.size() + " ignored; " +
             sources.size() + " sources; " +
             tests.size() + " tests; " +
-            ignored.size() + " ignored;";
+            open.size() + " open;";
     }
 
     private class ListMap {

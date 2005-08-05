@@ -6,7 +6,6 @@
 package com.echologic.xfiles;
 
 import java.awt.BorderLayout;
-import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -19,13 +18,14 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -33,20 +33,24 @@ import com.intellij.openapi.vcs.FileStatusManager;
 public class XFilesToolWindow extends JPanel {
 
     private Logger log = Logger.getInstance(getClass().getName());
-    private Project project;
-    private DefaultListModel model = new DefaultListModel();
+
+    // TODO: need a SortedListModel that re-orders things as they are added
+    //private DefaultListModel model = new DefaultListModel();
+    private OpenFilesComboBoxModel model = new OpenFilesComboBoxModel();
+    private JList list = new JList(model);
+
+    private FilterAction refresh = new FilterAction(model);
+    private ToggleAction scrollToSource = new ScrollToSourceAction();
+    private ToggleAction scrollFromSource = new ScrollFromSourceAction();
+
 
     public XFilesToolWindow(Project project) {
         super(new BorderLayout());
-        this.project = project;
 
-        FilterAction filter = new FilterAction(model);
-        AnAction selections = new FilterSelectionComboBoxAction(project, filter);
-        AnAction scrollToSource = new ScrollToSourceAction();
-        AnAction scrollFromSource = new ScrollFromSourceAction();
+        AnAction selections = new FilterSelectionComboBoxAction(project, refresh);
 
         DefaultActionGroup group = new DefaultActionGroup("xfiles group", false);
-        group.add(filter);
+        group.add(refresh);
         group.add(selections);
         group.add(scrollToSource);
         group.add(scrollFromSource);
@@ -59,39 +63,60 @@ public class XFilesToolWindow extends JPanel {
         // TODO: consider re-ordering editor tabs to match selected files here?
         // TODO: consider a sync option to sync editors with our list
 
-        JScrollPane scroller = new JScrollPane();
-        final JList list = new JList();
 
         FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
         ListCellRenderer renderer = new XFilesListCellRenderer(fileStatusManager);
         list.setCellRenderer(renderer);
 
         // TODO: might want some icons in a gutter to indicate things?
-        // for example a way to open or close selected files
+        // for example a way to open/close selected files
 
         FileEditorManagerListener editorListener = new FileEditorManagerListener() {
+
+            private void addAndScroll(VirtualFile file) {
+                if (!model.contains(file) && refresh.getFilter().accept(file)) {
+                    model.addElement(file);
+                    log.debug("added " + file);
+                }
+
+                int index = model.indexOf(file);
+                if (index >= 0 && scrollFromSource.isSelected(null)) {
+                    list.setSelectedIndex(index);
+                    list.ensureIndexIsVisible(index);
+                    log.debug("selected " + file);
+
+                }
+            }
+
             public void fileOpened(FileEditorManager source, VirtualFile file) {
-                // TODO: select this file if it's in our list
-                log.debug("file opened " + file.getName());
+                log.debug("file opened " + file.getName() + " scroll " + scrollFromSource.isSelected(null));
+
+                addAndScroll(file);
             }
 
             public void fileClosed(FileEditorManager source, VirtualFile file) {
-                // TODO: unselect this file if it's in our list
                 log.debug("file closed " + file.getName());
+                int index = model.indexOf(file);
+                if (index >= 0)
+                    model.removeElementAt(index);
             }
 
             public void selectionChanged(FileEditorManagerEvent event) {
-                String oldFile = "";
-                String newFile = "";
+                String oldName = "";
+                String newName = "";
+                VirtualFile file = null;
 
                 if (event.getOldFile() != null)
-                    oldFile = event.getOldFile().getName();
+                    oldName = event.getOldFile().getName();
 
-                if (event.getNewFile() != null)
-                    newFile = event.getNewFile().getName();
+                if (event.getNewFile() != null) {
+                    newName = event.getNewFile().getName();
+                    file = event.getNewFile();
+                }
 
-                log.debug("selection changed: old file " + oldFile + " new file " + newFile);
-                // TODO: change the corresponding selections in our list
+                log.debug("selection changed: old file " + oldName + " new file " + newName + " scroll " + scrollFromSource.isSelected(null));
+
+                if (file != null) addAndScroll(file);
             }
         };
 
@@ -108,7 +133,7 @@ public class XFilesToolWindow extends JPanel {
                     if (list.isSelectedIndex(first) && list.isSelectedIndex(last)) {
                         if (first == last) {
                             log.debug("selected " + first);
-                            file = (VirtualFile) model.get(first);
+                            file = (VirtualFile) model.getElementAt(first);
                         } else {
                             log.debug("both selected " + first + ", " + last);
                             return;
@@ -116,35 +141,31 @@ public class XFilesToolWindow extends JPanel {
                     } else if (list.isSelectedIndex(first)) {
                         log.debug("selected " + first);
                         log.debug("unselected " + last);
-                        file = (VirtualFile) model.get(first);
+                        file = (VirtualFile) model.getElementAt(first);
                     } else if (list.isSelectedIndex(last)) {
                         log.debug("unselected " + first);
                         log.debug("selected " + last);
-                        file = (VirtualFile) model.get(last);
+                        file = (VirtualFile) model.getElementAt(last);
                     } else {
                         log.debug("none selected " + first + ", " + last);
                         return;
                     }
 
-                    log.debug("selected " + file);
-
-                    // TODO: really we should open the file if it's closed or else select it if its already open
-                    // except that the way to do this via the openapi is non-obvious
-                    // just opening the file seems to work ok
-
-                    // TODO: only do this if scroll to source is on
-
-                    editor.openFile(file, true);
+                    if (scrollToSource.isSelected(null)) {
+                        editor.openFile(file, true);
+                        log.debug("selected " + file);
+                    }
                 }
             }
         };
 
+        // TODO: need to also listen for file created/renamed/deleted events and add/remove from list
+        
         ListSelectionModel selection = list.getSelectionModel();
         selection.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         selection.addListSelectionListener(listener);
 
-        list.setModel(model);
-
+        JScrollPane scroller = new JScrollPane();
         scroller.getViewport().setView(list);
 
         add(scroller, BorderLayout.CENTER);

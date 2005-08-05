@@ -95,7 +95,7 @@ public class XFiles implements ProjectComponent {
     private void registerToolWindow() {
         ToolWindowManager manager = ToolWindowManager.getInstance(project);
         ToolWindow window = manager.registerToolWindow(TOOL_WINDOW_ID, new XFilesToolWindow(project), ToolWindowAnchor.LEFT);
-        window.setTitle("Title");
+        window.setTitle(project.getName());
         Icon icon = new ImageIcon(FilterAction.class.getResource("/objectBrowser/visibilitySort.png"));
         window.setIcon(icon);
         // TODO: assign hot key to activate window if that's even possible

@@ -5,11 +5,9 @@
  */
 package com.echologic.xfiles;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -21,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 
@@ -36,13 +35,17 @@ public class FilterAction extends AnAction {
 
     private static Icon icon = new ImageIcon(FilterAction.class.getResource("/actions/sync.png"));
 
-    private DefaultListModel model;
+    private OpenFilesComboBoxModel model;
     private Comparator comparator = new VirtualFileComparator();
-    private XFilesVirtualFileFilter filter;
+    private VirtualFileFilter filter = VirtualFileFilter.NONE;
 
-    public FilterAction(DefaultListModel model) {
+    public FilterAction(OpenFilesComboBoxModel model) {
         super("refresh filter", "refresh filter", icon);
         this.model = model;
+    }
+
+    public VirtualFileFilter getFilter() {
+        return filter;
     }
 
     public void setFilter(XFilesVirtualFileFilter filter) {
@@ -92,7 +95,7 @@ public class FilterAction extends AnAction {
         // define the sort order explicitly
 
         List included = content.getIncluded();
-        Collections.sort(included, comparator);
+        //Collections.sort(included, comparator);
 
         model.clear();
         for (Iterator iterator = included.iterator(); iterator.hasNext();) {
@@ -105,9 +108,7 @@ public class FilterAction extends AnAction {
 
         WindowManager windowManager = WindowManager.getInstance();
         StatusBar statusBar = windowManager.getStatusBar(project);
-        statusBar.setInfo("filter refreshed in " + delta + "ms; " + content + "; " + filter);
-
-        filter.log();
+        statusBar.setInfo("filter refreshed in " + delta + "ms; " + content + " " + filter);
 
         // TODO: decide how to do logical combination of selection based on the information above
         // i.e. if two statuses and two file types are selected for inclusion what is the expected result
