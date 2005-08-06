@@ -11,6 +11,7 @@ import javax.swing.ImageIcon;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 
 /**
  * This class represents selection of a named filter configuration from the list
@@ -28,9 +29,9 @@ public class FilterSelectionAction extends AnAction {
 
     private String name;
     private FilterSelectionComboBoxAction combo;
-    private XFilesVirtualFileFilter filter;
+    private VirtualFileFilter filter;
 
-    public FilterSelectionAction(FilterSelectionComboBoxAction combo, String name, XFilesVirtualFileFilter filter) {
+    public FilterSelectionAction(FilterSelectionComboBoxAction combo, String name, VirtualFileFilter filter) {
         super(name, "description", ICON);
         this.combo = combo;
         this.name = name;
@@ -41,13 +42,13 @@ public class FilterSelectionAction extends AnAction {
         return name;
     }
 
-    public XFilesVirtualFileFilter getFilter() {
+    public VirtualFileFilter getFilter() {
         return filter;
     }
 
     /**
      * When a filter is selected we update the text of the FilterSelectionComboBoxAction and then
-     * run the FilterAction with the selected filter.
+     * run the RefreshAction with the selected filter.
      *
      * - persist each configured filter
      * - persist which filter is currently selected
@@ -75,8 +76,6 @@ public class FilterSelectionAction extends AnAction {
      */
     public void actionPerformed(AnActionEvent event) {
         log.debug("selected filter " + name);
-        combo.setSelected(this);
-
-        // TODO: could try passing in this event and running the filter
+        combo.setSelected(this, event);
     }
 }

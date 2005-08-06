@@ -9,6 +9,7 @@ import javax.swing.JComponent;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,7 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
 
     private DefaultActionGroup group;
     private Presentation presentation;
-    private FilterAction filterAction;
+    private RefreshAction refreshAction;
 
     private XFilesVirtualFileFilter configFilter;
     private XFilesVirtualFileFilter changedFilter;
@@ -36,10 +37,11 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
     private XFilesVirtualFileFilter ignoredFilter;
     private XFilesVirtualFileFilter unknownFilter;
     private XFilesVirtualFileFilter openFilter;
+    private XFilesVirtualFileFilter actionFilter;
 
     // TODO: hibernate mapping filter *.hbm.xml in build/mappings directory!?!
 
-    public FilterSelectionComboBoxAction(Project project, FilterAction filterAction) {
+    public FilterSelectionComboBoxAction(Project project, RefreshAction refreshAction) {
         configFilter = new XFilesVirtualFileFilter(project);
         configFilter.addAcceptedType(StdFileTypes.PROPERTIES);
         configFilter.addAcceptedType(StdFileTypes.XML);
@@ -63,12 +65,16 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
         openFilter = new XFilesVirtualFileFilter(project);
         openFilter.setAcceptOpen(true);
 
-        this.filterAction = filterAction;
+        actionFilter = new XFilesVirtualFileFilter(project);
+        actionFilter.addAcceptedGlob("Filter*");
+
+        this.refreshAction = refreshAction;
     }
 
-    public void setSelected(FilterSelectionAction selection) {
+    public void setSelected(FilterSelectionAction selection, AnActionEvent event) {
         presentation.setText(selection.getName());
-        filterAction.setFilter(selection.getFilter());
+        refreshAction.setFilter(selection.getFilter());
+        refreshAction.actionPerformed(event);
     }
 
     /**
@@ -87,12 +93,17 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
         group.add(new FilterSelectionAction(this, "ignored files", ignoredFilter));
         group.add(new FilterSelectionAction(this, "unknown files", unknownFilter));
         group.add(new FilterSelectionAction(this, "open files", openFilter));
+        group.add(new FilterSelectionAction(this, "actions", actionFilter));
         group.addSeparator();
         group.add(new FilterConfigurationAction());
 
         return group;
     }
 
+    /**
+     * TODO: is this going to work ok when there are several projects open?
+     * @see OpenFilesComboBoxAction/Listener/Model for the specific problems
+     */
     public JComponent createCustomComponent(Presentation presentation) {
         this.presentation = presentation;
         presentation.setDescription("change/configure filter selections");

@@ -18,7 +18,7 @@ public class ScrollToSourceAction extends ToggleAction {
 
     private static Icon icon = new ImageIcon(ScrollToSourceAction.class.getResource("/general/autoscrollToSource.png"));
 
-    boolean selected;
+    boolean selected = true; // TODO: persist setting in workspace
 
     public ScrollToSourceAction() {
         super("Autoscroll to Source", "Enable/Disable Autoscroll to Source", icon);

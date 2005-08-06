@@ -16,8 +16,8 @@ in their local configuration directories.
 
 LOGGING
 
-IntelliJ uses log4j internally for which is rather convenient for logging
-things from plugins under development!
+IntelliJ uses log4j internally which is rather convenient for logging things from
+plugins under development!
 
 Logging is configured in $IDEA_HOME/bin/log.xml using the log4j xml configuration.
 Log files are written to the IntelliJ $SYSTEM_DIR/log/idea.log[.n]
@@ -48,14 +48,12 @@ intellij's configuration uses. Set it to something that makes you happy.
 
 TODO
 
-- show files by status
-- show files matching pattern/glob
+- persist settings in workspace
+- filter configuration panel
+
 - little endian sort by camel case class names
 - indicate open/closed files
 - allow for file open/close
-- allow for one row of tabs (to be basically ignored)
-- open files tab
-- selected files tab
 
 Cheers,
 

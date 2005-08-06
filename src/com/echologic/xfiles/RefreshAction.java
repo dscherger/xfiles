@@ -5,7 +5,6 @@
  */
 package com.echologic.xfiles;
 
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import javax.swing.Icon;
@@ -25,21 +24,17 @@ import com.intellij.openapi.wm.WindowManager;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
- *
- * TODO: rename to RunFilterAction
  */
-
-public class FilterAction extends AnAction {
+public class RefreshAction extends AnAction {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
-    private static Icon icon = new ImageIcon(FilterAction.class.getResource("/actions/sync.png"));
+    private static Icon icon = new ImageIcon(RefreshAction.class.getResource("/actions/sync.png"));
 
     private OpenFilesComboBoxModel model;
-    private Comparator comparator = new VirtualFileComparator();
     private VirtualFileFilter filter = VirtualFileFilter.NONE;
 
-    public FilterAction(OpenFilesComboBoxModel model) {
+    public RefreshAction(OpenFilesComboBoxModel model) {
         super("refresh filter", "refresh filter", icon);
         this.model = model;
     }
@@ -48,7 +43,7 @@ public class FilterAction extends AnAction {
         return filter;
     }
 
-    public void setFilter(XFilesVirtualFileFilter filter) {
+    public void setFilter(VirtualFileFilter filter) {
         this.filter = filter;
     }
 

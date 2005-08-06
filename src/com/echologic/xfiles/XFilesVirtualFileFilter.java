@@ -26,6 +26,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 
+import org.apache.oro.text.GlobCompiler;
+import org.apache.oro.text.regex.MalformedPatternException;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.Perl5Matcher;
+
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
@@ -43,12 +48,18 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     private List acceptedTypeList = new ArrayList();
     private List acceptedVcsList = new ArrayList();
     private List acceptedModuleList = new ArrayList();
+    private List acceptedGlobList = new ArrayList();
+
+    private GlobCompiler compiler = new GlobCompiler();
+    private Perl5Matcher matcher = new Perl5Matcher();
 
     private boolean acceptIgnored;
     private boolean acceptSources;
     private boolean acceptTests;
     private boolean acceptDirectories;
     private boolean acceptOpen;
+
+    // available statuses, types, vcs's and modules
 
     private ListMap statusMap = new ListMap();
     private ListMap typeMap = new ListMap();
@@ -86,6 +97,16 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
     public void addAcceptedModule(Module module) {
         acceptedModuleList.add(module);
+    }
+
+    public void addAcceptedGlob(String glob) {
+        try {
+            Pattern pattern = compiler.compile(glob);
+            log.debug("compiled glob " + glob + " to pattern " + pattern.getPattern());
+            acceptedGlobList.add(pattern);
+        } catch (MalformedPatternException e) {
+            throw new RuntimeException("bad glob " + glob, e);
+        }
     }
 
     public void setAcceptIgnored(boolean b) {
@@ -160,6 +181,14 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
             open.add(file);
         }
 
+        if (!accepted) {
+            String path = file.getPath();
+            for (Iterator iterator = acceptedGlobList.iterator(); !accepted && iterator.hasNext();) {
+                Pattern pattern = (Pattern) iterator.next();
+                accepted |= matcher.contains(path, pattern);
+            }
+        }
+
         return accepted;
 
         // for name matches we can use reges or globs (allowing only * chars)
@@ -219,7 +248,7 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
     public String toString() {
         log();
-        
+
         return files.size() + " files; " +
             directories.size() + " directories; " +
             ignored.size() + " ignored; " +

@@ -26,6 +26,11 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileMoveEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -34,12 +39,10 @@ public class XFilesToolWindow extends JPanel {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
-    // TODO: need a SortedListModel that re-orders things as they are added
-    //private DefaultListModel model = new DefaultListModel();
     private OpenFilesComboBoxModel model = new OpenFilesComboBoxModel();
     private JList list = new JList(model);
 
-    private FilterAction refresh = new FilterAction(model);
+    private RefreshAction refresh = new RefreshAction(model);
     private ToggleAction scrollToSource = new ScrollToSourceAction();
     private ToggleAction scrollFromSource = new ScrollFromSourceAction();
 
@@ -123,6 +126,57 @@ public class XFilesToolWindow extends JPanel {
         final FileEditorManager editor = FileEditorManager.getInstance(project);
         editor.addFileEditorManagerListener(editorListener);
 
+        VirtualFileListener fileListener = new VirtualFileListener() {
+
+            public void propertyChanged(VirtualFilePropertyEvent event) {
+                // ignore changes to anything but the name property
+                if (!event.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
+
+                log.debug("renamed " + event.getFile() + "@" + event.getFile().hashCode());
+                log.debug("   from " + event.getOldValue());
+                log.debug("     to " + event.getNewValue());
+            }
+
+            public void contentsChanged(VirtualFileEvent event) {
+                // changes to content may affect the changed/unchanged status
+                // so we could check the selected filter here and add the file if it is accepted
+                // however note that *lots* of contentsChanged events may be generated
+                // so this is likely to be slow so ignore this for now
+            }
+
+            public void fileCreated(VirtualFileEvent event) {
+                log.debug("created " + event.getFile() + "@" + event.getFile().hashCode());
+            }
+
+            public void fileDeleted(VirtualFileEvent event) {
+                log.debug("deleted " + event.getFile() + "@" + event.getFile().hashCode());
+                log.debug(" parent " + event.getParent());
+                log.debug("   name " + event.getFileName());
+
+                // note that getFile().getPath() returns only the name for deleted files
+                // so we need to append the name to getParent().getPath()
+
+                // wonder if event.getFile() will equals a file in our model if it was deleted?
+            }
+
+            public void fileMoved(VirtualFileMoveEvent event) {
+                log.debug("moved " + event.getFile() + "@" + event.getFile().hashCode());
+                log.debug(" from " + event.getOldParent());
+                log.debug("   to " + event.getNewParent());
+            }
+
+            // ignore events before changes actually occur
+
+            public void beforePropertyChange(VirtualFilePropertyEvent event) {}
+            public void beforeContentsChange(VirtualFileEvent event) {}
+            public void beforeFileDeletion(VirtualFileEvent event) {}
+            public void beforeFileMovement(VirtualFileMoveEvent event) {}
+
+        };
+
+        VirtualFileManager fileManager = VirtualFileManager.getInstance();
+        fileManager.addVirtualFileListener(fileListener);
+
         ListSelectionListener listener = new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
@@ -159,8 +213,6 @@ public class XFilesToolWindow extends JPanel {
             }
         };
 
-        // TODO: need to also listen for file created/renamed/deleted events and add/remove from list
-        
         ListSelectionModel selection = list.getSelectionModel();
         selection.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         selection.addListSelectionListener(listener);
@@ -169,6 +221,7 @@ public class XFilesToolWindow extends JPanel {
         scroller.getViewport().setView(list);
 
         add(scroller, BorderLayout.CENTER);
+        setFocusable(true);
     }
 
 }
