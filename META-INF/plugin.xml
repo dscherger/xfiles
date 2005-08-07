@@ -23,7 +23,9 @@
     <project-components>
         <component>
             <implementation-class>com.echologic.xfiles.XFiles</implementation-class>
-            <!--save plugin config in iws file-->
+        </component>
+        <component>
+            <implementation-class>com.echologic.xfiles.XFilesConfiguration</implementation-class>
             <option name="workspace" value="true"/>
         </component>
     </project-components>

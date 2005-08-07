@@ -49,6 +49,8 @@ public class XFilesToolWindow extends JPanel {
     public XFilesToolWindow(Project project) {
         super(new BorderLayout());
 
+        XFilesConfiguration configuration = project.getComponent(XFilesConfiguration.class);
+
         AnAction selections = new FilterSelectionComboBoxAction(project, refresh);
 
         DefaultActionGroup group = new DefaultActionGroup("xfiles group", false);
@@ -74,6 +76,7 @@ public class XFilesToolWindow extends JPanel {
         // for example a way to open/close selected files
 
         FileEditorManagerListener editorListener = new FileEditorManagerListener() {
+            // TODO: factor out this listener
 
             private void addAndScroll(VirtualFile file) {
                 if (!model.contains(file) && refresh.getFilter().accept(file)) {
@@ -126,6 +129,7 @@ public class XFilesToolWindow extends JPanel {
         editor.addFileEditorManagerListener(editorListener);
 
         VirtualFileListener fileListener = new VirtualFileListener() {
+            // TODO: factor out this listener
 
             public void propertyChanged(VirtualFilePropertyEvent event) {
                 // ignore changes to anything but the name property
@@ -177,6 +181,8 @@ public class XFilesToolWindow extends JPanel {
         fileManager.addVirtualFileListener(fileListener);
 
         ListSelectionListener listener = new ListSelectionListener() {
+            // TODO: factor out this listener
+
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
                     int first = e.getFirstIndex();

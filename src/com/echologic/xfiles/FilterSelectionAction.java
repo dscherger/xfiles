@@ -31,6 +31,8 @@ public class FilterSelectionAction extends AnAction {
     private FilterSelectionComboBoxAction combo;
     private VirtualFileFilter filter;
 
+    // TODO: do we need to hold the filter here, or just it's name to use for a lookup?
+
     public FilterSelectionAction(FilterSelectionComboBoxAction combo, String name, VirtualFileFilter filter) {
         super(name, "description", ICON);
         this.combo = combo;

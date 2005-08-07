@@ -37,27 +37,29 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
+    private String name;
+
     private ProjectRootManager rootManager;
     private ProjectLevelVcsManager vcsManager;
     private ProjectFileIndex fileIndex;
     private FileStatusManager statusManager;
     private FileEditorManager editorManager;
 
-    private List acceptedStatusList = new ArrayList();
-    private List acceptedTypeList = new ArrayList();
-    private List acceptedVcsList = new ArrayList();
-    private List acceptedModuleList = new ArrayList();
-    private List acceptedGlobList = new ArrayList();
+    private List acceptedStatusNames;
+    private List acceptedTypeNames;
+    private List acceptedVcsNames;
+    private List acceptedModuleNames;
+    private List acceptedNameGlobs;
 
     private GlobCompiler compiler = new GlobCompiler();
     private Perl5Matcher matcher = new Perl5Matcher();
 
-    private boolean acceptIgnored;
-    private boolean acceptSources;
-    private boolean acceptTests;
+    private boolean acceptIgnoredFiles;
+    private boolean acceptSourceFiles;
+    private boolean acceptTestFiles;
     private boolean acceptFiles;
     private boolean acceptDirectories;
-    private boolean acceptOpen;
+    private boolean acceptOpenFiles;
 
     // available statuses, types, vcs's and modules
 
@@ -83,54 +85,40 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         fileIndex = rootManager.getFileIndex();
     }
 
-    public void addAcceptedStatus(String status) {
-        acceptedStatusList.add(status);
+    public void setConfiguration(XFilesFilterConfiguration configuration) {
+        name = configuration.FILTER_NAME;
+
+        acceptedStatusNames = configuration.ACCEPTED_STATUS_NAMES;
+        acceptedTypeNames = configuration.ACCEPTED_TYPE_NAMES;
+        acceptedVcsNames = configuration.ACCEPTED_VCS_NAMES;
+        acceptedModuleNames = configuration.ACCEPTED_MODULE_NAMES;
+        acceptedNameGlobs = compileAcceptedNameGlobs(configuration.ACCEPTED_NAME_GLOBS);
+
+        acceptIgnoredFiles = configuration.ACCEPT_IGNORED_FILES;
+        acceptSourceFiles = configuration.ACCEPT_SOURCE_FILES;
+        acceptTestFiles = configuration.ACCEPT_TEST_FILES;
+        acceptFiles = configuration.ACCEPT_FILES;
+        acceptDirectories = configuration.ACCEPT_DIRECTORIES;
+        acceptOpenFiles = configuration.ACCEPT_OPEN_FILES;
     }
 
-    public void addAcceptedType(String type) {
-        acceptedTypeList.add(type);
+    public String getName() {
+        return name;
     }
 
-    public void addAcceptedVcs(String vcs) {
-        acceptedVcsList.add(vcs);
-    }
-
-    public void addAcceptedModule(String module) {
-        acceptedModuleList.add(module);
-    }
-
-    public void addAcceptedGlob(String glob) {
-        try {
-            Pattern pattern = compiler.compile(glob);
-            log.debug("compiled glob " + glob + " to pattern " + pattern.getPattern());
-            acceptedGlobList.add(pattern);
-        } catch (MalformedPatternException e) {
-            throw new RuntimeException("bad glob " + glob, e);
+    public List compileAcceptedNameGlobs(List globs) {
+        ArrayList list = new ArrayList();
+        for (Iterator iterator = globs.iterator(); iterator.hasNext();) {
+            String glob = (String) iterator.next();
+            try {
+                    Pattern pattern = compiler.compile(glob);
+                    log.debug("compiled glob " + glob + " to pattern " + pattern.getPattern());
+                    list.add(pattern);
+            } catch (MalformedPatternException e) {
+                throw new RuntimeException("bad glob " + glob, e);
+            }
         }
-    }
-
-    public void setAcceptIgnored(boolean b) {
-        acceptIgnored = b;
-    }
-
-    public void setAcceptSources(boolean b) {
-        acceptSources = b;
-    }
-
-    public void setAcceptTests(boolean b) {
-        acceptTests = b;
-    }
-
-    public void setAcceptFiles(boolean b) {
-        acceptFiles = b;
-    }
-
-    public void setAcceptDirectories(boolean b) {
-        acceptDirectories = b;
-    }
-
-    public void setAcceptOpen(boolean b) {
-        acceptOpen = b;
+        return list;
     }
 
     public boolean accept(VirtualFile file) {
@@ -139,39 +127,40 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
         FileStatus status = statusManager.getStatus(file);
         String statusText = status.getText();
-        accepted |= acceptedStatusList.contains(statusText);
+        accepted |= acceptedStatusNames.contains(statusText);
         statusMap.count(statusText, file);
 
         FileType type = file.getFileType();
         String typeName = type.getName();
-        accepted |= acceptedTypeList.contains(typeName);
+        accepted |= acceptedTypeNames.contains(typeName);
         typeMap.count(typeName, file);
 
         AbstractVcs vcs = vcsManager.getVcsFor(file);
         String vcsName = "<None>";
         if (vcs != null) vcsName = vcs.getName();
-        accepted |= acceptedVcsList.contains(vcsName);
+        accepted |= acceptedVcsNames.contains(vcsName);
         vcsMap.count(vcsName, file);
 
         Module module = fileIndex.getModuleForFile(file);
-        String moduleName = module.getName();
-        accepted |= acceptedModuleList.contains(moduleName);
+        String moduleName = "<None>";
+        if (module != null) moduleName = module.getName();
+        accepted |= acceptedModuleNames.contains(moduleName);
 
         moduleMap.count(moduleName, file);
 
         if (fileIndex.isIgnored(file)) {
             ignored.count(file);
-            accepted |= acceptIgnored;
+            accepted |= acceptIgnoredFiles;
         }
 
         // note that SourceContent is a superset TestSourceContent
 
         if (fileIndex.isInTestSourceContent(file)) {
             tests.count(file);
-            accepted |= acceptTests;
+            accepted |= acceptTestFiles;
         } else if (fileIndex.isInSourceContent(file)) {
             sources.count(file);
-            accepted |= acceptSources;
+            accepted |= acceptSourceFiles;
         }
 
         if (file.isDirectory()) {
@@ -183,13 +172,13 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         }
 
         if (editorManager.isFileOpen(file)) {
-            accepted |= acceptOpen;
+            accepted |= acceptOpenFiles;
             open.count(file);
         }
 
         if (!accepted) {
             String path = file.getPath();
-            for (Iterator iterator = acceptedGlobList.iterator(); !accepted && iterator.hasNext();) {
+            for (Iterator iterator = acceptedNameGlobs.iterator(); !accepted && iterator.hasNext();) {
                 Pattern pattern = (Pattern) iterator.next();
                 accepted |= matcher.contains(path, pattern);
             }
