@@ -46,7 +46,6 @@ public class XFilesToolWindow extends JPanel {
     private ToggleAction scrollToSource = new ScrollToSourceAction();
     private ToggleAction scrollFromSource = new ScrollFromSourceAction();
 
-
     public XFilesToolWindow(Project project) {
         super(new BorderLayout());
 
@@ -206,7 +205,7 @@ public class XFilesToolWindow extends JPanel {
                     }
 
                     if (scrollToSource.isSelected(null)) {
-                        editor.openFile(file, true);
+                        editor.openFile(file, false);
                         log.debug("selected " + file);
                     }
                 }
@@ -221,7 +220,6 @@ public class XFilesToolWindow extends JPanel {
         scroller.getViewport().setView(list);
 
         add(scroller, BorderLayout.CENTER);
-        setFocusable(true);
     }
 
 }

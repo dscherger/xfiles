@@ -21,6 +21,7 @@ public class ScrollToSourceAction extends ToggleAction {
     boolean selected = true; // TODO: persist setting in workspace
 
     public ScrollToSourceAction() {
+        // TODO: create a scroll action and use two instances
         super("Autoscroll to Source", "Enable/Disable Autoscroll to Source", icon);
     }
 
