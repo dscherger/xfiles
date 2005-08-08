@@ -5,13 +5,12 @@
  */
 package com.echologic.xfiles;
 
-import java.util.List;
-
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.diagnostic.Logger;
 
 import org.jdom.Element;
 
@@ -20,13 +19,15 @@ import org.jdom.Element;
  */
 public class XFilesFilterConfiguration implements JDOMExternalizable {
 
+    private Logger log = Logger.getInstance(getClass().getName());
+
     public String FILTER_NAME;
 
-    public List ACCEPTED_STATUS_NAMES = new JDOMExternalizableStringList();
-    public List ACCEPTED_TYPE_NAMES = new JDOMExternalizableStringList();
-    public List ACCEPTED_VCS_NAMES = new JDOMExternalizableStringList();
-    public List ACCEPTED_MODULE_NAMES = new JDOMExternalizableStringList();
-    public List ACCEPTED_NAME_GLOBS = new JDOMExternalizableStringList();
+    public JDOMExternalizableStringList ACCEPTED_STATUS_NAMES = new JDOMExternalizableStringList();
+    public JDOMExternalizableStringList ACCEPTED_TYPE_NAMES = new JDOMExternalizableStringList();
+    public JDOMExternalizableStringList ACCEPTED_VCS_NAMES = new JDOMExternalizableStringList();
+    public JDOMExternalizableStringList ACCEPTED_MODULE_NAMES = new JDOMExternalizableStringList();
+    public JDOMExternalizableStringList ACCEPTED_NAME_GLOBS = new JDOMExternalizableStringList();
 
     public boolean ACCEPT_IGNORED_FILES;
     public boolean ACCEPT_SOURCE_FILES;
@@ -37,9 +38,11 @@ public class XFilesFilterConfiguration implements JDOMExternalizable {
 
     public void readExternal(Element element) throws InvalidDataException {
         DefaultJDOMExternalizer.readExternal(this, element);
+        log.debug("readExternal: " + FILTER_NAME);
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
+        log.debug("writeExternal: " + FILTER_NAME);
         DefaultJDOMExternalizer.writeExternal(this, element);
     }
 

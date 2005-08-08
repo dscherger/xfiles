@@ -32,7 +32,7 @@ public class RefreshAction extends AnAction {
     private static Icon icon = new ImageIcon(RefreshAction.class.getResource("/actions/sync.png"));
 
     private OpenFilesComboBoxModel model;
-    private VirtualFileFilter filter = VirtualFileFilter.NONE;
+    private VirtualFileFilter filter;
 
     public RefreshAction(OpenFilesComboBoxModel model) {
         super("refresh filter", "refresh filter", icon);
@@ -62,13 +62,6 @@ public class RefreshAction extends AnAction {
         final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
         final ProjectFileIndex index = projectRootManager.getFileIndex();
 
-        // TODO: once a filter is defined we iterate over everything and see if it fits
-        // if it does we add it to the list we're hopefully collecting
-        // then sort the list and display it with the proper file status colors
-        // and ICON indications of open or closed?
-        // and also ICON indications of errors or not?
-        // little endian camel case sort might be nice too
-
         VirtualFile[] roots = projectRootManager.getContentRoots();
 
         log.debug("iterating content under roots");
@@ -82,15 +75,8 @@ public class RefreshAction extends AnAction {
         }
 
         // TODO: FilterConfigurationPanel to edit configurations
-        // TODO: FilterConfiguration to store individual configurations
-        // TODO: XFilesFilter that uses selected FilterConfiguration to filter files
-        // TODO: XFilesConfiguration class to hold FilterConfigurations and selected filter
-
-        // TODO: the collected list should be run through the selected filter which should
-        // define the sort order explicitly
 
         List included = content.getIncluded();
-        //Collections.sort(included, comparator);
 
         model.clear();
         for (Iterator iterator = included.iterator(); iterator.hasNext();) {

@@ -106,6 +106,10 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public List compileAcceptedNameGlobs(List globs) {
         ArrayList list = new ArrayList();
         for (Iterator iterator = globs.iterator(); iterator.hasNext();) {

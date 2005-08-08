@@ -53,6 +53,8 @@ public class XFilesToolWindow extends JPanel {
 
         AnAction selections = new FilterSelectionComboBoxAction(project, refresh);
 
+        log.debug("filter list created; selected filter " + refresh.getFilter());
+
         DefaultActionGroup group = new DefaultActionGroup("xfiles group", false);
         group.add(refresh);
         group.add(selections);

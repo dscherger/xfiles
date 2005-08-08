@@ -8,14 +8,14 @@ package com.echologic.xfiles;
 import java.util.Iterator;
 import javax.swing.JComponent;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vcs.FileStatus;
 
 /**
@@ -46,10 +46,12 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
 
         configuration = project.getComponent(XFilesConfiguration.class);
 
+        /*
 	if (configuration == null) {
 		log.debug("creating configuration");
 		configuration = new XFilesConfiguration();
 	}
+	*/
 
         log.debug("initializing configuration");
 
@@ -124,6 +126,8 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
         // I beleive the configuration is saved to the workspace on apply as well
         // and we should probably drop and recreate all of the filters at that point
 
+        group = new DefaultActionGroup();
+        configurePopupActionGroup();
     }
 
     public void setSelected(FilterSelectionAction selection, AnActionEvent event) {
@@ -153,8 +157,6 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
     protected DefaultActionGroup createPopupActionGroup(JComponent component) {
         log.debug("createPopupActionGroup");
 
-        group = new DefaultActionGroup();
-        configurePopupActionGroup();
         return group;
     }
 
@@ -165,6 +167,8 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
         log.debug("configurePopupActionGroup");
         group.removeAll();
 
+        refreshAction.setFilter(null);
+
         if (configuration != null) {
             for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
                 XFilesFilterConfiguration config = (XFilesFilterConfiguration) iterator.next();
@@ -173,6 +177,7 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
 
                 if (filter.getName().equals(configuration.SELECTED_FILTER)) {
                     refreshAction.setFilter(filter);
+                    log.debug("selected filter " + configuration.SELECTED_FILTER);
                 }
 
                 AnAction action = new FilterSelectionAction(this, filter.getName(), filter);
@@ -185,6 +190,13 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
 
         if (group.getChildrenCount() > 0) group.addSeparator();
         group.add(new FilterConfigurationAction());
+
+        if (refreshAction.getFilter() == null) {
+            log.debug("null filter selected");
+            XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
+            filter.setName("default filter");
+            refreshAction.setFilter(filter);
+        }
     }
 
 }

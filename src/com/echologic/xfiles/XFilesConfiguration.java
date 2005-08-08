@@ -25,7 +25,6 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
 
     private Logger log = Logger.getInstance(getClass().getName());
 
-    private static final String INITIALIZED_NODE = "INITIALIZED";
     private static final String SCROLL_TO_SOURCE_NODE = "SCROLL_TO_SOURCE";
     private static final String SCROLL_FROM_SOURCE_NODE = "SCROLL_FROM_SOURCE";
     private static final String SELECTED_FILTER_NODE = "SELECTED_FILTER";
@@ -44,10 +43,16 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
     public void disposeComponent() {}
 
     public String getComponentName() {
+        log.debug("getComponentName");
         return "XFilesConfiguration";
     }
 
+    /**
+     * Read configuration settings from the DOM subtree rooted at the specified element.
+     */
     public void readExternal(Element root) throws InvalidDataException {
+        log.debug("readExternal");
+
         SCROLL_TO_SOURCE = JDOMExternalizer.readBoolean(root, SCROLL_TO_SOURCE_NODE);
         SCROLL_FROM_SOURCE = JDOMExternalizer.readBoolean(root, SCROLL_FROM_SOURCE_NODE);
         SELECTED_FILTER = JDOMExternalizer.readString(root, SELECTED_FILTER_NODE);
@@ -55,20 +60,30 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
         Element list = root.getChild(CONFIGURED_FILTERS_NODE);
         List filters = list.getChildren(FILTER_NODE);
 
+
         for (Iterator iterator = filters.iterator(); iterator.hasNext();) {
             Element filter = (Element) iterator.next();
             XFilesFilterConfiguration configuration = new XFilesFilterConfiguration();
             configuration.readExternal(filter);
         }
+
+        log.debug("readExternal: " + CONFIGURED_FILTERS.size() + " filters");
     }
 
+    /**
+     * Write configuration settings to the DOM subtree rooted at the specified element.
+     */
     public void writeExternal(Element root) throws WriteExternalException {
+        log.debug("writeExternal");
+
         JDOMExternalizer.write(root, SCROLL_TO_SOURCE_NODE, SCROLL_TO_SOURCE);
         JDOMExternalizer.write(root, SCROLL_FROM_SOURCE_NODE, SCROLL_FROM_SOURCE);
         JDOMExternalizer.write(root, SELECTED_FILTER_NODE, SELECTED_FILTER);
 
         Element list = new Element(CONFIGURED_FILTERS_NODE);
         root.addContent(list);
+
+        log.debug("writeExternal: " + CONFIGURED_FILTERS.size() + " filters");
 
         for (Iterator iterator = CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
             XFilesFilterConfiguration configuration = (XFilesFilterConfiguration) iterator.next();
