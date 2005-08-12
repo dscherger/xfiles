@@ -6,6 +6,8 @@
 package com.echologic.xfiles;
 
 import java.awt.BorderLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -16,9 +18,7 @@ import javax.swing.event.ListSelectionListener;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -26,11 +26,11 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileMoveEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileMoveEvent;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -39,19 +39,31 @@ public class XFilesToolWindow extends JPanel {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
+    private Icon SCROLL_TO_ICON = new ImageIcon(getClass().getResource("/general/autoscrollToSource.png"));
+    private Icon SCROLL_FROM_ICON = new ImageIcon(getClass().getResource("/general/autoscrollFromSource.png"));
+
+    private ScrollAction scrollToSource = new ScrollAction("Autoscroll to Source",
+                                                           "Enable/Disable Autoscroll to Source",
+                                                           SCROLL_TO_ICON);
+
+    private ScrollAction scrollFromSource = new ScrollAction("Autoscroll from Source",
+                                                             "Enable/Disable Autoscroll from Source",
+                                                             SCROLL_FROM_ICON);
+
     private OpenFilesComboBoxModel model = new OpenFilesComboBoxModel();
     private JList list = new JList(model);
-
     private RefreshAction refresh = new RefreshAction(model);
-    private ToggleAction scrollToSource = new ScrollToSourceAction();
-    private ToggleAction scrollFromSource = new ScrollFromSourceAction();
 
     public XFilesToolWindow(Project project) {
         super(new BorderLayout());
 
         XFilesConfiguration configuration = project.getComponent(XFilesConfiguration.class);
 
-        AnAction selections = new FilterSelectionComboBoxAction(project, refresh);
+        scrollToSource.setSelected(configuration.SCROLL_TO_SOURCE);
+        scrollFromSource.setSelected(configuration.SCROLL_FROM_SOURCE);
+
+        FilterSelectionComboBoxAction selections = new FilterSelectionComboBoxAction(project, refresh);
+        selections.setConfiguration(configuration);
 
         log.debug("filter list created; selected filter " + refresh.getFilter());
 
@@ -68,7 +80,6 @@ public class XFilesToolWindow extends JPanel {
 
         // TODO: consider re-ordering editor tabs to match selected files here?
         // TODO: consider a sync option to sync editors with our list
-
 
         FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
         ListCellRenderer renderer = new XFilesListCellRenderer(fileStatusManager);

@@ -18,6 +18,12 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class OpenFilesComboBoxModel extends AbstractListModel implements MutableComboBoxModel {
 
+    /**
+     * TODO: consider different sort orders
+     * - alphabetic
+     * - little endian class order
+     * - hotspot order on number of change events recorded
+     */
     private VirtualFileComparator comparator = new VirtualFileComparator();
     private List files = new ArrayList();
     private int selected = -1;

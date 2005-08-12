@@ -61,6 +61,7 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     private boolean acceptDirectories;
     private boolean acceptOpenFiles;
 
+    // TODO: move these to a listener class that the filter can update as it runs
     // available statuses, types, vcs's and modules
 
     private VirtualFileCounterMap statusMap = new VirtualFileCounterMap("file statuses");

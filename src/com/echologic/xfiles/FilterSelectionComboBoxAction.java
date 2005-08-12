@@ -35,23 +35,14 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
     private DefaultActionGroup group;
     private Presentation presentation;
 
-
     public FilterSelectionComboBoxAction(Project project, RefreshAction refreshAction) {
-
         this.project = project;
         this.refreshAction = refreshAction;
+        this.group = new DefaultActionGroup();
+    }
 
-        // TODO: we may want to move all of this initialization to the tool window
-        // and do it as things are initially constructed -- it seems a bit awkward here
-
-        configuration = project.getComponent(XFilesConfiguration.class);
-
-        /*
-	if (configuration == null) {
-		log.debug("creating configuration");
-		configuration = new XFilesConfiguration();
-	}
-	*/
+    public void setConfiguration(XFilesConfiguration configuration) {
+        this.configuration = configuration;
 
         log.debug("initializing configuration");
 
@@ -126,11 +117,11 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
         // I beleive the configuration is saved to the workspace on apply as well
         // and we should probably drop and recreate all of the filters at that point
 
-        group = new DefaultActionGroup();
         configurePopupActionGroup();
+
     }
 
-    public void setSelected(FilterSelectionAction selection, AnActionEvent event) {
+    public void setSelected(SelectFilterAction selection, AnActionEvent event) {
         presentation.setText(selection.getName());
         refreshAction.setFilter(selection.getFilter());
         refreshAction.actionPerformed(event);
@@ -150,13 +141,12 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
     }
 
     /**
-     * Note that the only way the list of available FilterSelectionAction's can change
-     * is through the FilterConfigurationAction. When some FilterSelectionAction is
+     * Note that the only way the list of available SelectFilterAction's can change
+     * is through the EditConfigurationsAction. When some SelectFilterAction is
      * performed we need to update the presentation text.
      */
     protected DefaultActionGroup createPopupActionGroup(JComponent component) {
         log.debug("createPopupActionGroup");
-
         return group;
     }
 
@@ -173,6 +163,7 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
             for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
                 XFilesFilterConfiguration config = (XFilesFilterConfiguration) iterator.next();
                 XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
+                // TODO: filter.setListener(listener);
                 filter.setConfiguration(config);
 
                 if (filter.getName().equals(configuration.SELECTED_FILTER)) {
@@ -180,7 +171,8 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
                     log.debug("selected filter " + configuration.SELECTED_FILTER);
                 }
 
-                AnAction action = new FilterSelectionAction(this, filter.getName(), filter);
+                AnAction action = new SelectFilterAction(this, filter.getName(), filter);
+                // TODO: action.setListener(listener);
                 group.add(action);
                 log.debug("added filter " + filter.getName());
             }
@@ -189,7 +181,7 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
         }
 
         if (group.getChildrenCount() > 0) group.addSeparator();
-        group.add(new FilterConfigurationAction());
+        group.add(new EditConfigurationsAction());
 
         if (refreshAction.getFilter() == null) {
             log.debug("null filter selected");

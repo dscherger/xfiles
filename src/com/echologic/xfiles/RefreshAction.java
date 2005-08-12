@@ -68,6 +68,9 @@ public class RefreshAction extends AnAction {
 
         XFilesContentIterator content = new XFilesContentIterator(filter);
 
+        // TODO: reset filter to clear lists of things
+        // better would be to have the filter notify a listener on different things it sees
+
         for (int i = 0; i < roots.length; i++) {
             VirtualFile root = roots[i];
             log.debug("root " + root.getPath());
@@ -97,6 +100,8 @@ public class RefreshAction extends AnAction {
         // but logical and/or between selections of different types might both be useful
         // i.e. these statuses AND those types
         //   vs these status OR those types
+
+        // TODO: set model's selected element to currently open editor
 
     }
 

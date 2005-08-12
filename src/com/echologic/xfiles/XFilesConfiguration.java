@@ -5,16 +5,16 @@
  */
 package com.echologic.xfiles;
 
-import java.util.List;
-import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.components.ProjectComponent;
 
 import org.jdom.Element;
 
@@ -37,15 +37,18 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
 
     public List CONFIGURED_FILTERS = new ArrayList();
 
+    // ProjectComponent methods
+
     public void projectOpened() {}
     public void projectClosed() {}
     public void initComponent() {}
     public void disposeComponent() {}
 
     public String getComponentName() {
-        log.debug("getComponentName");
         return "XFilesConfiguration";
     }
+
+    // JDOMExternalizer methods
 
     /**
      * Read configuration settings from the DOM subtree rooted at the specified element.
