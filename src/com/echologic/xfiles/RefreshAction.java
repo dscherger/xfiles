@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -31,10 +32,10 @@ public class RefreshAction extends AnAction {
 
     private static Icon icon = new ImageIcon(RefreshAction.class.getResource("/actions/sync.png"));
 
-    private OpenFilesComboBoxModel model;
-    private VirtualFileFilter filter;
+    private XFilesListModel model;
+    private XFilesVirtualFileFilter filter;
 
-    public RefreshAction(OpenFilesComboBoxModel model) {
+    public RefreshAction(XFilesListModel model) {
         super("refresh filter", "refresh filter", icon);
         this.model = model;
     }
@@ -43,7 +44,7 @@ public class RefreshAction extends AnAction {
         return filter;
     }
 
-    public void setFilter(VirtualFileFilter filter) {
+    public void setFilter(XFilesVirtualFileFilter filter) {
         this.filter = filter;
     }
 
@@ -66,18 +67,16 @@ public class RefreshAction extends AnAction {
 
         log.debug("iterating content under roots");
 
-        XFilesContentIterator content = new XFilesContentIterator(filter);
+        FilterLogger logger = new FilterLogger();
+        filter.setLogger(logger);
 
-        // TODO: reset filter to clear lists of things
-        // better would be to have the filter notify a listener on different things it sees
+        XFilesContentIterator content = new XFilesContentIterator(filter);
 
         for (int i = 0; i < roots.length; i++) {
             VirtualFile root = roots[i];
             log.debug("root " + root.getPath());
             index.iterateContentUnderDirectory(root, content);
         }
-
-        // TODO: FilterConfigurationPanel to edit configurations
 
         List included = content.getIncluded();
 
@@ -92,7 +91,9 @@ public class RefreshAction extends AnAction {
 
         WindowManager windowManager = WindowManager.getInstance();
         StatusBar statusBar = windowManager.getStatusBar(project);
-        statusBar.setInfo("filter refreshed in " + delta + "ms; " + content + " " + filter);
+        statusBar.setInfo("filter refreshed in " + delta + "ms; " + logger);
+
+        logger.log();
 
         // TODO: decide how to do logical combination of selection based on the information above
         // i.e. if two statuses and two file types are selected for inclusion what is the expected result
@@ -101,8 +102,11 @@ public class RefreshAction extends AnAction {
         // i.e. these statuses AND those types
         //   vs these status OR those types
 
-        // TODO: set model's selected element to currently open editor
+        FileEditorManager editorManager = FileEditorManager.getInstance(project);
+        VirtualFile[] files = editorManager.getSelectedFiles();
 
+        if (files != null && files.length > 0)
+            model.setSelectedItem(files[0]);
     }
 
 }

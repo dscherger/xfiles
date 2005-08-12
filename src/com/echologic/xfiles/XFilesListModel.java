@@ -6,17 +6,16 @@
 package com.echologic.xfiles;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 import javax.swing.AbstractListModel;
-import javax.swing.MutableComboBoxModel;
 
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
-public class OpenFilesComboBoxModel extends AbstractListModel implements MutableComboBoxModel {
+public class XFilesListModel extends AbstractListModel {
 
     /**
      * TODO: consider different sort orders

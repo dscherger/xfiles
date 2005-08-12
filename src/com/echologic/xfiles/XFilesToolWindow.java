@@ -50,7 +50,7 @@ public class XFilesToolWindow extends JPanel {
                                                              "Enable/Disable Autoscroll from Source",
                                                              SCROLL_FROM_ICON);
 
-    private OpenFilesComboBoxModel model = new OpenFilesComboBoxModel();
+    private XFilesListModel model = new XFilesListModel();
     private JList list = new JList(model);
     private RefreshAction refresh = new RefreshAction(model);
 
@@ -62,7 +62,7 @@ public class XFilesToolWindow extends JPanel {
         scrollToSource.setSelected(configuration.SCROLL_TO_SOURCE);
         scrollFromSource.setSelected(configuration.SCROLL_FROM_SOURCE);
 
-        FilterSelectionComboBoxAction selections = new FilterSelectionComboBoxAction(project, refresh);
+        FilterListComboBoxAction selections = new FilterListComboBoxAction(project, refresh);
         selections.setConfiguration(configuration);
 
         log.debug("filter list created; selected filter " + refresh.getFilter());

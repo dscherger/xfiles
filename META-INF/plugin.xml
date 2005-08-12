@@ -5,14 +5,15 @@
     <name>XFiles</name>
 
     <description>
-        A plugin that docks below the project pane to list interesting, changed, open files
-        to aid with navigation between the files you are hopefully interested in.
+        The XFiles plugin displays a list of files selected according to a configurable
+        set of filters. Various attributes may be used as filtering criteria such as file
+        status, file type, module, version control system, source and test files, etc.
     </description>
 
     <version>0.1</version>
     <vendor url="http://www.echologic.com" email="derek@echologic.com">Derek Scherger</vendor>
     <change-notes>
-        just getting started
+        Some pre-defined test filters are working and the ability to customize filters is coming soon!
     </change-notes>
 
     <idea-version since-build="4.0" until-build="5.0"/>
@@ -33,26 +34,7 @@
     <module-components>
     </module-components>
 
-    <!--
-    
-    the CustomComponent action interface really seems to have some problems with project level
-    components. calls to createCustomComponent don't specify for which projecft they are being
-    made and keeping track seems to be non-portable between linux and windows. for now the plan
-    is to have an open files filter in sync with open editors. it might actually be nice to
-    always see which files are open anyway. also this requires one less click to switch to another
-    open file and leaves the opportunity for a clickable "close this file" action on open files.
-
     <actions>
-        <action id="XFiles.OpenFiles" text="open files" class="com.echologic.xfiles.OpenFilesComboBoxAction"/>
-
-        <group id="XFiles.Group" text="xfiles group">
-            <reference id="XFiles.OpenFiles"/>
-            <add-to-group group-id="MainToolBar" anchor="last"/>
-        </group>
-
     </actions>
-    -->
 
 </idea-plugin>
-
-

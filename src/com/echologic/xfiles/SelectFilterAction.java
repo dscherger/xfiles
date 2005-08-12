@@ -11,7 +11,6 @@ import javax.swing.ImageIcon;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 
 /**
  * This class represents selection of a named filter configuration from the list
@@ -21,20 +20,19 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
  */
 public class SelectFilterAction extends AnAction {
 
-    //public static final Icon ICON = new ImageIcon(SelectFilterAction.class.getResource("/runConfigurations/hidePassed.png"));
-    public static final Icon ICON = new ImageIcon(SelectFilterAction.class.getResource("/debugger/class_filter.png"));
+    private Logger log = Logger.getInstance(SelectFilterAction.class.getName());
 
-    private static Logger log = Logger.getInstance(OpenFilesComboBoxAction.class.getName());
+    private static Icon ICON = new ImageIcon(SelectFilterAction.class.getResource("/debugger/class_filter.png"));
 
     private String name;
-    private FilterSelectionComboBoxAction combo;
-    private VirtualFileFilter filter;
+    private FilterListComboBoxAction filters;
+    private XFilesVirtualFileFilter filter;
 
     // TODO: do we need to hold the filter here, or just it's name to use for a lookup?
 
-    public SelectFilterAction(FilterSelectionComboBoxAction combo, String name, VirtualFileFilter filter) {
+    public SelectFilterAction(FilterListComboBoxAction filters, String name, XFilesVirtualFileFilter filter) {
         super(name, "description", ICON);
-        this.combo = combo;
+        this.filters = filters;
         this.name = name;
         this.filter = filter;
     }
@@ -43,12 +41,12 @@ public class SelectFilterAction extends AnAction {
         return name;
     }
 
-    public VirtualFileFilter getFilter() {
+    public XFilesVirtualFileFilter getFilter() {
         return filter;
     }
 
     public void actionPerformed(AnActionEvent event) {
         log.debug("selected filter " + name);
-        combo.setSelected(this, event);
+        filters.setSelected(this, event);
     }
 }

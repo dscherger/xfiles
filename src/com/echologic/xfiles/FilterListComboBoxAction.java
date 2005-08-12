@@ -22,12 +22,10 @@ import com.intellij.openapi.vcs.FileStatus;
  * This class represents a menu of available filter configurations to select from.
  *
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
- *
- * TODO: rename to FilterListComboBoxAction
  */
-public class FilterSelectionComboBoxAction extends ComboBoxAction {
+public class FilterListComboBoxAction extends ComboBoxAction {
 
-    private static Logger log = Logger.getInstance(OpenFilesComboBoxAction.class.getName());
+    private static Logger log = Logger.getInstance(FilterListComboBoxAction.class.getName());
 
     private Project project;
     private RefreshAction refreshAction;
@@ -35,7 +33,7 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
     private DefaultActionGroup group;
     private Presentation presentation;
 
-    public FilterSelectionComboBoxAction(Project project, RefreshAction refreshAction) {
+    public FilterListComboBoxAction(Project project, RefreshAction refreshAction) {
         this.project = project;
         this.refreshAction = refreshAction;
         this.group = new DefaultActionGroup();
@@ -163,7 +161,6 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
             for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
                 XFilesFilterConfiguration config = (XFilesFilterConfiguration) iterator.next();
                 XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
-                // TODO: filter.setListener(listener);
                 filter.setConfiguration(config);
 
                 if (filter.getName().equals(configuration.SELECTED_FILTER)) {
@@ -172,7 +169,6 @@ public class FilterSelectionComboBoxAction extends ComboBoxAction {
                 }
 
                 AnAction action = new SelectFilterAction(this, filter.getName(), filter);
-                // TODO: action.setListener(listener);
                 group.add(action);
                 log.debug("added filter " + filter.getName());
             }

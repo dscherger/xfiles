@@ -6,10 +6,8 @@
 package com.echologic.xfiles;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -61,20 +59,7 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     private boolean acceptDirectories;
     private boolean acceptOpenFiles;
 
-    // TODO: move these to a listener class that the filter can update as it runs
-    // available statuses, types, vcs's and modules
-
-    private VirtualFileCounterMap statusMap = new VirtualFileCounterMap("file statuses");
-    private VirtualFileCounterMap typeMap = new VirtualFileCounterMap("file types");
-    private VirtualFileCounterMap vcsMap = new VirtualFileCounterMap("version control systems");
-    private VirtualFileCounterMap moduleMap = new VirtualFileCounterMap("modules");
-
-    private VirtualFileCounter files = new VirtualFileCounter("files");
-    private VirtualFileCounter directories = new VirtualFileCounter("directories");
-    private VirtualFileCounter ignored = new VirtualFileCounter("ignored");
-    private VirtualFileCounter sources = new VirtualFileCounter("sources");
-    private VirtualFileCounter tests = new VirtualFileCounter("tests");
-    private VirtualFileCounter open = new VirtualFileCounter("open");
+    private FilterLogger logger;
 
     public XFilesVirtualFileFilter(Project project) {
         rootManager = ProjectRootManager.getInstance(project);
@@ -111,14 +96,18 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         this.name = name;
     }
 
+    public void setLogger(FilterLogger logger) {
+        this.logger = logger;
+    }
+
     public List compileAcceptedNameGlobs(List globs) {
         ArrayList list = new ArrayList();
         for (Iterator iterator = globs.iterator(); iterator.hasNext();) {
             String glob = (String) iterator.next();
             try {
-                    Pattern pattern = compiler.compile(glob);
-                    log.debug("compiled glob " + glob + " to pattern " + pattern.getPattern());
-                    list.add(pattern);
+                Pattern pattern = compiler.compile(glob);
+                log.debug("compiled glob " + glob + " to pattern " + pattern.getPattern());
+                list.add(pattern);
             } catch (MalformedPatternException e) {
                 throw new RuntimeException("bad glob " + glob, e);
             }
@@ -133,149 +122,72 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         FileStatus status = statusManager.getStatus(file);
         String statusText = status.getText();
         accepted |= acceptedStatusNames.contains(statusText);
-        statusMap.count(statusText, file);
+        if (logger != null) logger.logStatus(statusText, file);
 
         FileType type = file.getFileType();
         String typeName = type.getName();
         accepted |= acceptedTypeNames.contains(typeName);
-        typeMap.count(typeName, file);
+        if (logger != null) logger.logType(typeName, file);
 
         AbstractVcs vcs = vcsManager.getVcsFor(file);
         String vcsName = "<None>";
         if (vcs != null) vcsName = vcs.getName();
         accepted |= acceptedVcsNames.contains(vcsName);
-        vcsMap.count(vcsName, file);
+        if (logger != null) logger.logVcs(vcsName, file);
 
         Module module = fileIndex.getModuleForFile(file);
         String moduleName = "<None>";
         if (module != null) moduleName = module.getName();
         accepted |= acceptedModuleNames.contains(moduleName);
-
-        moduleMap.count(moduleName, file);
+        if (logger != null) logger.logModule(moduleName, file);
 
         if (fileIndex.isIgnored(file)) {
-            ignored.count(file);
             accepted |= acceptIgnoredFiles;
+            if (logger != null) logger.logIgnored(file);
         }
 
         // note that SourceContent is a superset TestSourceContent
 
         if (fileIndex.isInTestSourceContent(file)) {
-            tests.count(file);
             accepted |= acceptTestFiles;
+            if (logger != null) logger.logTest(file);
         } else if (fileIndex.isInSourceContent(file)) {
-            sources.count(file);
             accepted |= acceptSourceFiles;
+            if (logger != null) logger.logSource(file);
         }
 
         if (file.isDirectory()) {
             accepted |= acceptDirectories;
-            directories.count(file);
+            if (logger != null) logger.logDirectory(file);
         } else {
             accepted |= acceptFiles;
-            files.count(file);
+            if (logger != null) logger.logFile(file);
         }
 
         if (editorManager.isFileOpen(file)) {
             accepted |= acceptOpenFiles;
-            open.count(file);
+            if (logger != null) logger.logOpen(file);
         }
 
-        if (!accepted) {
-            String path = file.getPath();
-            for (Iterator iterator = acceptedNameGlobs.iterator(); !accepted && iterator.hasNext();) {
-                Pattern pattern = (Pattern) iterator.next();
-                accepted |= matcher.contains(path, pattern);
+        String path = file.getPath();
+        for (Iterator iterator = acceptedNameGlobs.iterator(); !accepted && iterator.hasNext();) {
+            Pattern pattern = (Pattern) iterator.next();
+            boolean matched = matcher.contains(path, pattern);
+            accepted |= matched;
+            if (matched) {
+                if (logger != null) logger.logMatch(pattern.getPattern(), file);
+            } else {
+                if (logger != null) logger.logMismatch(pattern.getPattern(), file);
             }
         }
 
+        if (accepted) {
+            if (logger != null) logger.logAccepted(file);
+        } else {
+            if (logger != null) logger.logRejected(file);
+        }
+        
         return accepted;
-    }
-
-    public void log() {
-        statusMap.log();
-        typeMap.log();
-        vcsMap.log();
-        moduleMap.log();
-        files.log();
-        directories.log();
-        ignored.log();
-        sources.log();
-        tests.log();
-        open.log();
-    }
-
-    public String toString() {
-        log();
-
-        return files.getCount() + " files; " +
-            directories.getCount() + " directories; " +
-            ignored.getCount() + " ignored; " +
-            sources.getCount() + " sources; " +
-            tests.getCount() + " tests; " +
-            open.getCount() + " open;";
-    }
-
-    private class VirtualFileCounter {
-
-        private String name;
-
-        private List files = new ArrayList();
-
-        public VirtualFileCounter(String name) {
-            this.name = name;
-        }
-
-        public void count(VirtualFile file) {
-            files.add(file);
-        }
-
-        public int getCount() {
-            return files.size();
-        }
-
-        public void log() {
-            log.debug(files.size() + " " + name + " files");
-            for (Iterator iterator = files.iterator(); iterator.hasNext();) {
-                VirtualFile file = (VirtualFile) iterator.next();
-                log.debug(name + " " + file.getPath());
-            }
-        }
-    }
-
-    private class VirtualFileCounterMap {
-
-        private String name;
-        private Map map = new HashMap();
-
-        public VirtualFileCounterMap(String name) {
-            this.name = name;
-        }
-
-        public VirtualFileCounter get(String key) {
-            VirtualFileCounter counter = (VirtualFileCounter) map.get(key);
-            if (counter == null) {
-                counter = new VirtualFileCounter(key);
-                map.put(key, counter);
-            }
-            return counter;
-        }
-
-        public void count(String key, VirtualFile file) {
-            VirtualFileCounter counter = get(key);
-            counter.count(file);
-        }
-
-        public void log() {
-            log.debug(name);
-
-            for (Iterator iterator = map.keySet().iterator(); iterator.hasNext();) {
-                String key = (String) iterator.next();
-                VirtualFileCounter counter = (VirtualFileCounter) map.get(key);
-                counter.log();
-            }
-
-        }
     }
 
 }
