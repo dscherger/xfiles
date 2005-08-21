@@ -37,11 +37,14 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
     private String name;
 
-    private ProjectRootManager rootManager;
     private ProjectLevelVcsManager vcsManager;
     private ProjectFileIndex fileIndex;
     private FileStatusManager statusManager;
     private FileEditorManager editorManager;
+
+    // each of the following need to be listed in their
+    // own table under a heading describing the table contents
+    // selected, name, count
 
     private List acceptedStatusNames;
     private List acceptedTypeNames;
@@ -52,6 +55,9 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     private GlobCompiler compiler = new GlobCompiler();
     private Perl5Matcher matcher = new Perl5Matcher();
 
+    // all of these could be listed in one table under the
+    // "other" heading again with selected, name, count
+    
     private boolean acceptIgnoredFiles;
     private boolean acceptSourceFiles;
     private boolean acceptTestFiles;
@@ -62,12 +68,12 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     private FilterLogger logger;
 
     public XFilesVirtualFileFilter(Project project) {
-        rootManager = ProjectRootManager.getInstance(project);
         vcsManager = ProjectLevelVcsManager.getInstance(project);
 
         statusManager = FileStatusManager.getInstance(project);
         editorManager = FileEditorManager.getInstance(project);
 
+        ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
         fileIndex = rootManager.getFileIndex();
     }
 

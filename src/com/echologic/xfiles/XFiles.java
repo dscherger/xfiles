@@ -67,6 +67,7 @@ public class XFiles implements Configurable, ProjectComponent {
      * @return true if the configuration has changed
      */
     public boolean isModified() {
+        // TODO: need methods to compare configuration and editor
         return false;
     }
 
@@ -83,6 +84,9 @@ public class XFiles implements Configurable, ProjectComponent {
      * Reset the values in the configuration editor from those in the saved configuration.
      */
     public void reset() {
+        // TODO: might want to run a counting filter at this point to get available values
+        // after filter has completed use the associated logger to get initial values for
+        // the confugration panel then apply current configurations on top of that
         log.debug("reset");
     }
 
@@ -103,14 +107,6 @@ public class XFiles implements Configurable, ProjectComponent {
     }
 
     public void projectOpened() {
-        registerToolWindow();
-    }
-
-    public void projectClosed() {
-        unregisterToolWindow();
-    }
-
-    private void registerToolWindow() {
         ToolWindowManager manager = ToolWindowManager.getInstance(project);
         ToolWindow window = manager.registerToolWindow(TOOL_WINDOW_ID,
                                                        new XFilesToolWindow(project),
@@ -119,9 +115,8 @@ public class XFiles implements Configurable, ProjectComponent {
         window.setIcon(TOOL_WINDOW_ICON);
     }
 
-    private void unregisterToolWindow() {
+    public void projectClosed() {
         ToolWindowManager manager = ToolWindowManager.getInstance(project);
         manager.unregisterToolWindow(TOOL_WINDOW_ID);
     }
-
 }

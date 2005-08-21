@@ -105,16 +105,6 @@ public class FilterListComboBoxAction extends ComboBoxAction {
 
         configuration.SELECTED_FILTER = "open files";
 
-        // TODO: here we need to get the XFilesConfiguration component
-        // and reconstruct the filters it has persisted. when we get into
-        // editing filters we'll need to keep the configuration data in sync
-        // with the filters.
-
-        // presumably editing the filters will pull data from the configuration
-        // to the ui in reset and push datafrom the ui to the configuration in apply.
-        // I beleive the configuration is saved to the workspace on apply as well
-        // and we should probably drop and recreate all of the filters at that point
-
         configurePopupActionGroup();
 
     }
@@ -176,6 +166,8 @@ public class FilterListComboBoxAction extends ComboBoxAction {
             log.debug("null configuration");
         }
 
+        // TODO: consider adding this to the tool window's toolbar rather than here
+        
         if (group.getChildrenCount() > 0) group.addSeparator();
         group.add(new EditConfigurationsAction());
 

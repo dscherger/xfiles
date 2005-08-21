@@ -41,9 +41,4 @@ public class XFilesContentIterator implements ContentIterator {
     public List getExcluded() {
         return included;
     }
-
-
-    public String toString() {
-        return included.size() + " included; " + excluded.size() + " excluded";
-    }
 }

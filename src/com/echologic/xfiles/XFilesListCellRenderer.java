@@ -38,7 +38,7 @@ public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
         FileType type = file.getFileType();
 
         // TODO: we may want extensions for non-java files?!?
-        setText(file.getNameWithoutExtension() + " "); // TODO: better way to add trailing space
+        setText(file.getNameWithoutExtension());
         setIcon(type.getIcon());
 
         FileStatus status = fileStatusManager.getStatus(file);

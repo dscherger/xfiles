@@ -29,6 +29,8 @@ public class XFilesFilterConfiguration implements JDOMExternalizable {
     public JDOMExternalizableStringList ACCEPTED_MODULE_NAMES = new JDOMExternalizableStringList();
     public JDOMExternalizableStringList ACCEPTED_NAME_GLOBS = new JDOMExternalizableStringList();
 
+    // TODO: match any/all conditions
+    
     public boolean ACCEPT_IGNORED_FILES;
     public boolean ACCEPT_SOURCE_FILES;
     public boolean ACCEPT_TEST_FILES;
