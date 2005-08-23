@@ -39,6 +39,6 @@ public class XFilesContentIterator implements ContentIterator {
     }
 
     public List getExcluded() {
-        return included;
+        return excluded;
     }
 }

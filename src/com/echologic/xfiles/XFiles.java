@@ -33,6 +33,7 @@ public class XFiles implements Configurable, ProjectComponent {
     public static final Icon TOOL_WINDOW_ICON = new ImageIcon(XFiles.class.getResource("/objectBrowser/visibilitySort.png"));
 
     private Project project;
+    private XFilesConfiguration configuration;
     private XFilesConfigurationEditor editor;
 
     public XFiles(Project project) {
@@ -54,7 +55,7 @@ public class XFiles implements Configurable, ProjectComponent {
     }
 
     public JComponent createComponent() {
-        if (editor == null) editor = new XFilesConfigurationEditor();
+        if (editor == null) editor = new XFilesConfigurationEditor(project);
         return editor;
     }
 
@@ -67,8 +68,8 @@ public class XFiles implements Configurable, ProjectComponent {
      * @return true if the configuration has changed
      */
     public boolean isModified() {
-        // TODO: need methods to compare configuration and editor
-        return false;
+        log.debug("isModified");
+        return editor.isModified(configuration);
     }
 
     /**
@@ -78,16 +79,15 @@ public class XFiles implements Configurable, ProjectComponent {
      */
     public void apply() throws ConfigurationException {
         log.debug("apply");
+        editor.apply(configuration);
     }
 
     /**
      * Reset the values in the configuration editor from those in the saved configuration.
      */
     public void reset() {
-        // TODO: might want to run a counting filter at this point to get available values
-        // after filter has completed use the associated logger to get initial values for
-        // the confugration panel then apply current configurations on top of that
         log.debug("reset");
+        editor.reset(configuration);
     }
 
     public void disposeUIResources() {
@@ -107,6 +107,8 @@ public class XFiles implements Configurable, ProjectComponent {
     }
 
     public void projectOpened() {
+        configuration = project.getComponent(XFilesConfiguration.class);
+
         ToolWindowManager manager = ToolWindowManager.getInstance(project);
         ToolWindow window = manager.registerToolWindow(TOOL_WINDOW_ID,
                                                        new XFilesToolWindow(project),

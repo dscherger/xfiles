@@ -15,8 +15,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 
 /**
  * This class represents a menu of available filter configurations to select from.
@@ -49,57 +49,57 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         XFilesFilterConfiguration filter;
 
         filter = new XFilesFilterConfiguration();
-        filter.FILTER_NAME = "config files";
+        filter.NAME = "config files";
         filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PROPERTIES.getName());
         filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.XML.getName());
         filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.DTD.getName());
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
-        filter.FILTER_NAME = "changed files";
+        filter.NAME = "changed files";
         filter.ACCEPTED_STATUS_NAMES.add(FileStatus.ADDED.getText());
         filter.ACCEPTED_STATUS_NAMES.add(FileStatus.DELETED.getText());
         filter.ACCEPTED_STATUS_NAMES.add(FileStatus.MODIFIED.getText());
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
-        filter.FILTER_NAME = "text files";
+        filter.NAME = "text files";
         filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PLAIN_TEXT.getName());
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
-        filter.FILTER_NAME = "unknown files";
+        filter.NAME = "unknown files";
         filter.ACCEPTED_STATUS_NAMES.add(FileStatus.UNKNOWN.getText());
         filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.UNKNOWN.getName());
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
-        filter.FILTER_NAME = "ignored files";
-        filter.ACCEPT_IGNORED_FILES = true;
+        filter.NAME = "ignored files";
+        filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.IGNORED);
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
-        filter.FILTER_NAME = "open files";
-        filter.ACCEPT_OPEN_FILES = true;
+        filter.NAME = "open files";
+        filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.OPEN);
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
-        filter.FILTER_NAME = "filter files";
+        filter.NAME = "filter files";
         filter.ACCEPTED_NAME_GLOBS.add("Filter*");
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
-        filter.FILTER_NAME = "all files";
-        filter.ACCEPT_FILES = true;
+        filter.NAME = "all files";
+        filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.FILE);
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
-        filter.FILTER_NAME = "all directories";
-        filter.ACCEPT_DIRECTORIES = true;
+        filter.NAME = "all directories";
+        filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.DIRECTORY);
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
-        filter.FILTER_NAME = "hibernate mappings";
+        filter.NAME = "hibernate mappings";
         filter.ACCEPTED_NAME_GLOBS.add("*.hbm.xml");
         configuration.CONFIGURED_FILTERS.add(filter);
 
@@ -167,7 +167,7 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         }
 
         // TODO: consider adding this to the tool window's toolbar rather than here
-        
+
         if (group.getChildrenCount() > 0) group.addSeparator();
         group.add(new EditConfigurationsAction());
 

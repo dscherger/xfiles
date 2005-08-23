@@ -21,30 +21,24 @@ public class XFilesFilterConfiguration implements JDOMExternalizable {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
-    public String FILTER_NAME;
+    public String NAME;
+
+    // TODO: match any/all conditions
 
     public JDOMExternalizableStringList ACCEPTED_STATUS_NAMES = new JDOMExternalizableStringList();
     public JDOMExternalizableStringList ACCEPTED_TYPE_NAMES = new JDOMExternalizableStringList();
     public JDOMExternalizableStringList ACCEPTED_VCS_NAMES = new JDOMExternalizableStringList();
     public JDOMExternalizableStringList ACCEPTED_MODULE_NAMES = new JDOMExternalizableStringList();
     public JDOMExternalizableStringList ACCEPTED_NAME_GLOBS = new JDOMExternalizableStringList();
-
-    // TODO: match any/all conditions
-    
-    public boolean ACCEPT_IGNORED_FILES;
-    public boolean ACCEPT_SOURCE_FILES;
-    public boolean ACCEPT_TEST_FILES;
-    public boolean ACCEPT_FILES;
-    public boolean ACCEPT_DIRECTORIES;
-    public boolean ACCEPT_OPEN_FILES;
+    public JDOMExternalizableStringList ACCEPTED_OTHERS = new JDOMExternalizableStringList();
 
     public void readExternal(Element element) throws InvalidDataException {
         DefaultJDOMExternalizer.readExternal(this, element);
-        log.debug("readExternal: " + FILTER_NAME);
+        log.debug("readExternal: " + NAME);
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
-        log.debug("writeExternal: " + FILTER_NAME);
+        log.debug("writeExternal: " + NAME);
         DefaultJDOMExternalizer.writeExternal(this, element);
     }
 

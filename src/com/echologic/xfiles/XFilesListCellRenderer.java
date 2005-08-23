@@ -38,6 +38,8 @@ public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
         FileType type = file.getFileType();
 
         // TODO: we may want extensions for non-java files?!?
+        // FIXME: .files have no name without extension!
+        
         setText(file.getNameWithoutExtension());
         setIcon(type.getIcon());
 

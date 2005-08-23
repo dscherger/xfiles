@@ -33,6 +33,15 @@ import org.apache.oro.text.regex.Perl5Matcher;
  */
 public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
+    public static final String IGNORED = "ignored";
+    public static final String SOURCE= "source";
+    public static final String TEST = "test";
+    public static final String DIRECTORY = "directory";
+    public static final String FILE = "file";
+    public static final String OPEN = "open";
+    public static final String ACCEPTED = "accepted";
+    public static final String REJECTED = "rejected";
+
     private Logger log = Logger.getInstance(getClass().getName());
 
     private String name;
@@ -51,19 +60,10 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     private List acceptedVcsNames;
     private List acceptedModuleNames;
     private List acceptedNameGlobs;
+    private List acceptedOthers;
 
     private GlobCompiler compiler = new GlobCompiler();
     private Perl5Matcher matcher = new Perl5Matcher();
-
-    // all of these could be listed in one table under the
-    // "other" heading again with selected, name, count
-    
-    private boolean acceptIgnoredFiles;
-    private boolean acceptSourceFiles;
-    private boolean acceptTestFiles;
-    private boolean acceptFiles;
-    private boolean acceptDirectories;
-    private boolean acceptOpenFiles;
 
     private FilterLogger logger;
 
@@ -78,20 +78,14 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     }
 
     public void setConfiguration(XFilesFilterConfiguration configuration) {
-        name = configuration.FILTER_NAME;
+        name = configuration.NAME;
 
         acceptedStatusNames = configuration.ACCEPTED_STATUS_NAMES;
         acceptedTypeNames = configuration.ACCEPTED_TYPE_NAMES;
         acceptedVcsNames = configuration.ACCEPTED_VCS_NAMES;
         acceptedModuleNames = configuration.ACCEPTED_MODULE_NAMES;
         acceptedNameGlobs = compileAcceptedNameGlobs(configuration.ACCEPTED_NAME_GLOBS);
-
-        acceptIgnoredFiles = configuration.ACCEPT_IGNORED_FILES;
-        acceptSourceFiles = configuration.ACCEPT_SOURCE_FILES;
-        acceptTestFiles = configuration.ACCEPT_TEST_FILES;
-        acceptFiles = configuration.ACCEPT_FILES;
-        acceptDirectories = configuration.ACCEPT_DIRECTORIES;
-        acceptOpenFiles = configuration.ACCEPT_OPEN_FILES;
+        acceptedOthers = configuration.ACCEPTED_OTHERS;
     }
 
     public String getName() {
@@ -123,63 +117,63 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
     public boolean accept(VirtualFile file) {
 
-        boolean accepted = false;
+        Acceptor acceptor = new AnyAcceptor();
 
         FileStatus status = statusManager.getStatus(file);
         String statusText = status.getText();
-        accepted |= acceptedStatusNames.contains(statusText);
+        acceptor.update(acceptedStatusNames.contains(statusText));
         if (logger != null) logger.logStatus(statusText, file);
 
         FileType type = file.getFileType();
         String typeName = type.getName();
-        accepted |= acceptedTypeNames.contains(typeName);
+        acceptor.update(acceptedTypeNames.contains(typeName));
         if (logger != null) logger.logType(typeName, file);
 
         AbstractVcs vcs = vcsManager.getVcsFor(file);
         String vcsName = "<None>";
         if (vcs != null) vcsName = vcs.getName();
-        accepted |= acceptedVcsNames.contains(vcsName);
+        acceptor.update(acceptedVcsNames.contains(vcsName));
         if (logger != null) logger.logVcs(vcsName, file);
 
         Module module = fileIndex.getModuleForFile(file);
         String moduleName = "<None>";
         if (module != null) moduleName = module.getName();
-        accepted |= acceptedModuleNames.contains(moduleName);
+        acceptor.update(acceptedModuleNames.contains(moduleName));
         if (logger != null) logger.logModule(moduleName, file);
 
         if (fileIndex.isIgnored(file)) {
-            accepted |= acceptIgnoredFiles;
-            if (logger != null) logger.logIgnored(file);
+            acceptor.update(acceptedOthers.contains(IGNORED));
+            if (logger != null) logger.logOther(IGNORED, file);
         }
 
         // note that SourceContent is a superset TestSourceContent
 
         if (fileIndex.isInTestSourceContent(file)) {
-            accepted |= acceptTestFiles;
-            if (logger != null) logger.logTest(file);
+            acceptor.update(acceptedOthers.contains(TEST));
+            if (logger != null) logger.logOther(TEST, file);
         } else if (fileIndex.isInSourceContent(file)) {
-            accepted |= acceptSourceFiles;
-            if (logger != null) logger.logSource(file);
+            acceptor.update(acceptedOthers.contains(SOURCE));
+            if (logger != null) logger.logOther(SOURCE, file);
         }
 
         if (file.isDirectory()) {
-            accepted |= acceptDirectories;
-            if (logger != null) logger.logDirectory(file);
+            acceptor.update(acceptedOthers.contains(DIRECTORY));
+            if (logger != null) logger.logOther(DIRECTORY, file);
         } else {
-            accepted |= acceptFiles;
-            if (logger != null) logger.logFile(file);
+            acceptor.update(acceptedOthers.contains(FILE));
+            if (logger != null) logger.logOther(FILE, file);
         }
 
         if (editorManager.isFileOpen(file)) {
-            accepted |= acceptOpenFiles;
-            if (logger != null) logger.logOpen(file);
+            acceptor.update(acceptedOthers.contains(OPEN));
+            if (logger != null) logger.logOther(OPEN, file);
         }
 
         String path = file.getPath();
-        for (Iterator iterator = acceptedNameGlobs.iterator(); !accepted && iterator.hasNext();) {
+        for (Iterator iterator = acceptedNameGlobs.iterator(); !acceptor.isAccepted() && iterator.hasNext();) {
             Pattern pattern = (Pattern) iterator.next();
             boolean matched = matcher.contains(path, pattern);
-            accepted |= matched;
+            acceptor.update(matched);
             if (matched) {
                 if (logger != null) logger.logMatch(pattern.getPattern(), file);
             } else {
@@ -187,13 +181,46 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
             }
         }
 
-        if (accepted) {
-            if (logger != null) logger.logAccepted(file);
+        if (acceptor.isAccepted()) {
+            if (logger != null) logger.logOther(ACCEPTED, file);
+            return true;
         } else {
-            if (logger != null) logger.logRejected(file);
+            if (logger != null) logger.logOther(REJECTED, file);
+            return false;
         }
-        
-        return accepted;
+    }
+
+    private abstract class Acceptor {
+
+        protected boolean accepted;
+
+        public abstract void update(boolean b);
+
+        public boolean isAccepted() {
+            return accepted;
+        }
+    }
+
+    private class AllAcceptor extends Acceptor {
+
+        public AllAcceptor() {
+            accepted = true;
+        }
+
+        public void update(boolean b) {
+            accepted &= b;
+        }
+    }
+
+    private class AnyAcceptor extends Acceptor {
+
+        public AnyAcceptor() {
+            accepted = false;
+        }
+
+        public void update(boolean b) {
+            accepted |= b;
+        }
     }
 
 }

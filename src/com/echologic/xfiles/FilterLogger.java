@@ -5,14 +5,13 @@
  */
 package com.echologic.xfiles;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -27,16 +26,7 @@ public class FilterLogger {
     private VirtualFileListMap moduleMap = new VirtualFileListMap("modules");
     private VirtualFileListMap matchMap = new VirtualFileListMap("matched globs");
     private VirtualFileListMap mismatchMap = new VirtualFileListMap("mismatched globs");
-
-    private VirtualFileList files = new VirtualFileList("files");
-    private VirtualFileList directories = new VirtualFileList("directories");
-    private VirtualFileList ignored = new VirtualFileList("ignored");
-    private VirtualFileList sources = new VirtualFileList("sources");
-    private VirtualFileList tests = new VirtualFileList("tests");
-    private VirtualFileList open = new VirtualFileList("open");
-    private VirtualFileList accepted = new VirtualFileList("accepted");
-    private VirtualFileList rejected = new VirtualFileList("rejected");
-
+    private VirtualFileListMap otherMap = new VirtualFileListMap("others");
 
     public void logStatus(String statusText, VirtualFile file) {
         statusMap.put(statusText, file);
@@ -62,65 +52,32 @@ public class FilterLogger {
         mismatchMap.put(pattern, file);
     }
 
-    public void logIgnored(VirtualFile file) {
-        ignored.add(file);
-    }
-
-    public void logTest(VirtualFile file) {
-        tests.add(file);
-    }
-
-    public void logSource(VirtualFile file) {
-        sources.add(file);
-    }
-
-    public void logDirectory(VirtualFile file) {
-        directories.add(file);
-    }
-
-    public void logFile(VirtualFile file) {
-        files.add(file);
-    }
-
-    public void logOpen(VirtualFile file) {
-        open.add(file);
-    }
-
-    public void logAccepted(VirtualFile file) {
-        accepted.add(file);
-    }
-
-    public void logRejected(VirtualFile file) {
-        rejected.add(file);
+    public void logOther(String type, VirtualFile file) {
+        otherMap.put(type, file);
     }
 
     public void log() {
+        /*
         statusMap.log();
         typeMap.log();
         vcsMap.log();
         moduleMap.log();
         matchMap.log();
         mismatchMap.log();
-
-        files.log();
-        directories.log();
-        ignored.log();
-        sources.log();
-        tests.log();
-        open.log();
-        accepted.log();
-        rejected.log();
+        otherMap.log();
+        */
     }
 
     public String toString() {
-        return files.getCount() + " files; " +
-            directories.getCount() + " directories; " +
-            ignored.getCount() + " ignored; " +
-            sources.getCount() + " sources; " +
-            tests.getCount() + " tests; " +
-            open.getCount() + " open; " +
-            accepted.getCount() + " accepted; " +
-            rejected.getCount() + " rejected;";
+        return
+            otherMap.getCount(XFilesVirtualFileFilter.FILE) + " files; " +
+            otherMap.getCount(XFilesVirtualFileFilter.DIRECTORY) + " directories; " +
+            otherMap.getCount(XFilesVirtualFileFilter.IGNORED) + " ignored; " +
+            otherMap.getCount(XFilesVirtualFileFilter.SOURCE) + " sources; " +
+            otherMap.getCount(XFilesVirtualFileFilter.TEST) + " tests; " +
+            otherMap.getCount(XFilesVirtualFileFilter.OPEN) + " open; " +
+            otherMap.getCount(XFilesVirtualFileFilter.ACCEPTED) + " accepted; " +
+            otherMap.getCount(XFilesVirtualFileFilter.REJECTED) + " rejected;";
     }
 
     private class VirtualFileList {
@@ -141,6 +98,7 @@ public class FilterLogger {
             return files.size();
         }
 
+        /*
         public void log() {
             log.debug(files.size() + " " + name);
             for (Iterator iterator = files.iterator(); iterator.hasNext();) {
@@ -148,6 +106,7 @@ public class FilterLogger {
                 log.debug(name + " " + file.getPath());
             }
         }
+        */
     }
 
     private class VirtualFileListMap {
@@ -168,11 +127,21 @@ public class FilterLogger {
             return list;
         }
 
+        public int getCount(String key) {
+            VirtualFileList list = (VirtualFileList) map.get(key);
+            if (list == null) {
+                return 0;
+            } else {
+                return list.getCount();
+            }
+        }
+
         public void put(String key, VirtualFile file) {
             VirtualFileList list = get(key);
             list.add(file);
         }
 
+        /*
         public void log() {
             log.debug(name);
 
@@ -183,6 +152,7 @@ public class FilterLogger {
             }
 
         }
+        */
     }
 
 
