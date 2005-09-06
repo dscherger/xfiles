@@ -22,6 +22,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
@@ -33,9 +34,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * This configuration editor panel is modeled after the JUnit run configuration editor.
@@ -60,12 +58,12 @@ public class XFilesConfigurationEditor extends JPanel {
     private DefaultListModel testListModel = new DefaultListModel();
     private JList testList = new JList(testListModel);
 
-    private ConfigurationTable statusTable = new ConfigurationTable("status");
-    private ConfigurationTable typeTable = new ConfigurationTable("type");
-    private ConfigurationTable vcsTable = new ConfigurationTable("vcs");
-    private ConfigurationTable moduleTable = new ConfigurationTable("module");
-    private ConfigurationTable globTable = new ConfigurationTable("glob");
-    private ConfigurationTable otherTable = new ConfigurationTable("other");
+    private ConfigurationTable statusTable = new ConfigurationTable();
+    private ConfigurationTable typeTable = new ConfigurationTable();
+    private ConfigurationTable vcsTable = new ConfigurationTable();
+    private ConfigurationTable moduleTable = new ConfigurationTable();
+    //private ConfigurationTable globTable = new ConfigurationTable();
+    private ConfigurationTable otherTable = new ConfigurationTable();
 
     public XFilesConfigurationEditor(Project project) {
         this.project = project;
@@ -104,28 +102,12 @@ public class XFilesConfigurationEditor extends JPanel {
         JLabel filterNameLabel = new JLabel("Filter Name:");
         configPanel.add(border(align(filterNameLabel)));
 
-        /*
-        configPanel.add(getTable("status",4));
-        configPanel.add(getTable("type",8));
-        configPanel.add(getTable("vcs",2));
-        configPanel.add(getTable("module",3));
-        configPanel.add(getTable("other",4));
-        configPanel.add(getTable("globs",2));
-        */
-
-        statusTable.initialize(4);
-        typeTable.initialize(8);
-        vcsTable.initialize(2);
-        moduleTable.initialize(3);
-        otherTable.initialize(4);
-        globTable.initialize(2);
-
         configPanel.add(statusTable.getScrollPane());
         configPanel.add(typeTable.getScrollPane());
         configPanel.add(vcsTable.getScrollPane());
         configPanel.add(moduleTable.getScrollPane());
         configPanel.add(otherTable.getScrollPane());
-        configPanel.add(globTable.getScrollPane());
+        //configPanel.add(globTable.getScrollPane());
 
         // test panel //
 
@@ -142,20 +124,6 @@ public class XFilesConfigurationEditor extends JPanel {
         this.add(border(align(configPanel)));
         this.add(border(align(testPanel)));
    }
-
-    /*
-    private JComponent getTable(String type, int count) {
-        ConfigurationTableModel model = new ConfigurationTableModel(type);
-        for (int i=0; i<count; i++) {
-            model.add(new ConfigurationItem(true, type, i));
-        }
-
-        JTable table = new JTable(model);
-        table.setPreferredScrollableViewportSize(table.getPreferredSize());
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-        return border(align(new JScrollPane(table)));
-    }
-    */
 
     /**
      * For box layout to work well we need to ensure things are aligned consistently.
@@ -185,7 +153,6 @@ public class XFilesConfigurationEditor extends JPanel {
      * @param configuration
      */
     public void apply(XFilesConfiguration configuration) {
-
     }
 
     /**
@@ -195,65 +162,58 @@ public class XFilesConfigurationEditor extends JPanel {
      */
     public void reset(XFilesConfiguration configuration) {
 
-        filterListModel.clear();
-        for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
-            XFilesFilterConfiguration filter = (XFilesFilterConfiguration) iterator.next();
-            filterListModel.addElement(filter.NAME);
-        }
-
-        // we run a counting filter at this point to get available values
-        // after filter has completed use the associated logger to get initial values for
-        // the confugration panel then apply current configurations on top of that
-
-        final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-        final ProjectFileIndex index = projectRootManager.getFileIndex();
-
-        VirtualFile[] roots = projectRootManager.getContentRoots();
-
-        log.debug("iterating content under roots");
-
-        FilterLogger logger = new FilterLogger();
-        XFilesFilterConfiguration empty = new XFilesFilterConfiguration();
         XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
-        filter.setConfiguration(empty);
-        filter.setLogger(logger);
+        CountingFilterListener logger = new CountingFilterListener();
+        filter.setListener(logger);
 
-        XFilesContentIterator content = new XFilesContentIterator(filter);
+        XFilesContentIterator content = new XFilesContentIterator(project);
+        content.setFilter(filter);
+        content.iterate();
 
-        for (int i = 0; i < roots.length; i++) {
-            VirtualFile root = roots[i];
-            log.debug("root " + root.getPath());
-            index.iterateContentUnderDirectory(root, content);
+        log.debug("reset: " + content + logger);
+
+        logger.log();
+        
+        filterListModel.clear();
+        ConfigurableFilterModel selected = new ConfigurableFilterModel(logger);
+        statusTable.setModel(selected.statusModel);
+        typeTable.setModel(selected.typeModel);
+        vcsTable.setModel(selected.vcsModel);
+        moduleTable.setModel(selected.moduleModel);
+        //globTable.setModel(selected.globModel);
+        otherTable.setModel(selected.otherModel);
+
+        /*
+        for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
+            XFilesFilterConfiguration filterConfig = (XFilesFilterConfiguration) iterator.next();
+
+            ConfigurableFilterModel filterModel = new ConfigurableFilterModel(logger);
+            filterModel.reset(filterConfig);
+
+            filterListModel.addElement(filterModel);
+            // TODO: this model should contain configurable filter models
+            // selection of one element must set the table models to those in the selected filter
+            // and also enable/disable buttons on the configuration toolbar
+            // delete simply removes one element and all of it's models from the list
+            // add must create a new element with associated modesl and add it to the list
+            // these models must be initialized with the results from running the reset filter
+            if (filterModel.name.equals(configuration.SELECTED_FILTER)) {
+                selected = filterModel;
+                log.debug("selected filter " + selected.name);
+            }
         }
 
-        // run filter for current counts and values
-        // set flags based on configurations
+        if (selected != null) {
+            statusTable.setModel(selected.statusModel);
+            typeTable.setModel(selected.typeModel);
+            vcsTable.setModel(selected.vcsModel);
+            moduleTable.setModel(selected.moduleModel);
+            //globTable.setModel(selected.globModel);
+            otherTable.setModel(selected.otherModel);
+        }
+        */
 
     }
-
-    // toolbar with add/delete/copy/up/down buttons (toolbar and actions)
-    // list of configured filters (JList, Scrollpane, model
-    // selecting a filter shows the associated filter configuration editor (selection listener)
-
-    // filter configuration editor contains
-    // status names
-    // type names
-    // vcs names
-    // module names
-    // path globs
-    // ignored/source/test/files/directories/open check boxes
-    // each item contains a count of matching things from running a blank filter over the current project
-
-    // note that we're editing the settings for a single filter not for all filters
-    // however the cancel/apply buttons apply to the entire configuration session
-    // and either all changes or no changes are saved
-
-    // we need a table component that holds a checkbox, type and count
-    // that lists all available settings from the selected filter merged
-    // with those from the last scan. several instances of this component
-    // will be used, one for each different aspect of the filter
-
-    // also something like match all (logical AND) or match any (logical OR) filter option 
 
     private class IconAction extends AnAction {
         public IconAction(String text, String description, Icon icon) {
@@ -290,10 +250,15 @@ public class XFilesConfigurationEditor extends JPanel {
          * specify the name of items in this model
          * i.e. vcs, status, type, etc.
          *
-         * @param name
+         * @param map
          */
-        public ConfigurationTableModel(String name) {
-            this.name = name;
+        public ConfigurationTableModel(VirtualFileCounterMap map) {
+            this.name = map.getName();
+
+            for (Iterator iterator = map.getCounters().iterator(); iterator.hasNext();) {
+                VirtualFileCounter counter = (VirtualFileCounter) iterator.next();
+                items.add(new ConfigurationItem(false, counter.getName(), counter.getCount()));
+            }
         }
 
         public String getName() {
@@ -351,10 +316,11 @@ public class XFilesConfigurationEditor extends JPanel {
                 case 0: item.included = included;
                 default: ; // exception!
             }
-
-            log.debug((included ? "included " : "excluded ") + name + " " + item.text);
         }
 
+        /**
+         * Get a list of the selected item names
+         */
         public List getSelectedItems() {
             List selected = new ArrayList();
             for (Iterator iterator = items.iterator(); iterator.hasNext();) {
@@ -364,27 +330,109 @@ public class XFilesConfigurationEditor extends JPanel {
             }
             return selected;
         }
+
+        /**
+         * Set the list of selected item names
+         *
+         * @param selected
+         */
+        public void setSelectedItems(List selected) {
+            for (Iterator iterator = items.iterator(); iterator.hasNext();) {
+                ConfigurationItem item = (ConfigurationItem) iterator.next();
+
+                if (selected.remove(item.text))
+                    item.included = Boolean.TRUE;
+                else
+                    item.included = Boolean.FALSE;
+            }
+
+            for (Iterator iterator = selected.iterator(); iterator.hasNext();) {
+                String text = (String) iterator.next();
+                ConfigurationItem item = new ConfigurationItem(true, text, 0);
+                items.add(item);
+            }
+        }
+
     }
 
     private class ConfigurationTable extends JTable {
 
-        public ConfigurationTable(String name) {
-            setModel(new ConfigurationTableModel(name));
-            setPreferredScrollableViewportSize(getPreferredSize());
+        private JScrollPane scroller = new JScrollPane(this,
+                                                       ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                                       ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        public ConfigurationTable() {
             setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
         }
 
         public JComponent getScrollPane() {
-            return border(align(new JScrollPane(this)));
+            return border(align(scroller));
         }
 
-        public void initialize(int count) {
-            ConfigurationTableModel model = (ConfigurationTableModel) getModel();
-            for (int i=0; i<count; i++) {
-                model.add(new ConfigurationItem(true, model.getName(), i));
-            }
-
+        public void setModel(TableModel model) {
+            super.setModel(model);
+            setPreferredScrollableViewportSize(getPreferredSize());
         }
     }
 
+    /**
+     * This class holds entries in the list of configurable filters that's being edited
+     */
+    private class ConfigurableFilterModel {
+
+        private String name;
+        private ConfigurationTableModel statusModel;
+        private ConfigurationTableModel typeModel;
+        private ConfigurationTableModel vcsModel;
+        private ConfigurationTableModel moduleModel;
+        //private ConfigurationTableModel globModel;
+        private ConfigurationTableModel otherModel;
+
+        public ConfigurableFilterModel(CountingFilterListener logger) {
+            // add unselected items and counts for each table in the logger
+
+            // TODO: the idea here is that we initialize the models based on the logger
+            // and then later set the list of selected things
+
+            statusModel = new ConfigurationTableModel(logger.getStatusMap());
+            typeModel = new ConfigurationTableModel(logger.getTypeMap());
+            vcsModel = new ConfigurationTableModel(logger.getVcsMap());
+            moduleModel = new ConfigurationTableModel(logger.getModuleMap());
+            //globModel = new ConfigurationTableModel(logger.getGlobMap());
+            otherModel = new ConfigurationTableModel(logger.getOtherMap());
+        }
+
+        public void reset(XFilesFilterConfiguration configuration) {
+            name = configuration.NAME;
+            // select items
+            statusModel.setSelectedItems(configuration.ACCEPTED_STATUS_NAMES);
+            typeModel.setSelectedItems(configuration.ACCEPTED_TYPE_NAMES);
+            vcsModel.setSelectedItems(configuration.ACCEPTED_VCS_NAMES);
+            moduleModel.setSelectedItems(configuration.ACCEPTED_MODULE_NAMES);
+            //globModel.setSelectedItems(configuration.ACCEPTED_NAME_GLOBS);
+            otherModel.setSelectedItems(configuration.ACCEPTED_OTHERS);
+        }
+
+        public void apply(XFilesFilterConfiguration configuration) {
+            configuration.NAME = name;
+
+            configuration.ACCEPTED_STATUS_NAMES.clear();
+            configuration.ACCEPTED_TYPE_NAMES.clear();
+            configuration.ACCEPTED_VCS_NAMES.clear();
+            configuration.ACCEPTED_MODULE_NAMES.clear();
+            configuration.ACCEPTED_NAME_GLOBS.clear();
+            configuration.ACCEPTED_OTHERS.clear();
+
+            configuration.ACCEPTED_STATUS_NAMES.addAll(statusModel.getSelectedItems());
+            configuration.ACCEPTED_TYPE_NAMES.addAll(typeModel.getSelectedItems());
+            configuration.ACCEPTED_VCS_NAMES.addAll(vcsModel.getSelectedItems());
+            configuration.ACCEPTED_MODULE_NAMES.addAll(moduleModel.getSelectedItems());
+            //configuration.ACCEPTED_NAME_GLOBS.addAll(globModel.getSelectedItems());
+            configuration.ACCEPTED_OTHERS.addAll(otherModel.getSelectedItems());
+        }
+
+        public String toString() {
+            return name;
+        }
+    }
 }

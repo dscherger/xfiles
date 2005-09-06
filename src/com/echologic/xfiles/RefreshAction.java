@@ -15,8 +15,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.wm.StatusBar;
@@ -60,23 +58,14 @@ public class RefreshAction extends AnAction {
 
         final Project project = (Project) event.getDataContext().getData(DataConstants.PROJECT);
 
-        final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-        final ProjectFileIndex index = projectRootManager.getFileIndex();
+        CountingFilterListener logger = new CountingFilterListener();
+        filter.setListener(logger);
 
-        VirtualFile[] roots = projectRootManager.getContentRoots();
+        XFilesContentIterator content = new XFilesContentIterator(project);
+        content.setFilter(filter);
+        content.iterate();
 
-        log.debug("iterating content under roots");
-
-        FilterLogger logger = new FilterLogger();
-        filter.setLogger(logger);
-
-        XFilesContentIterator content = new XFilesContentIterator(filter);
-
-        for (int i = 0; i < roots.length; i++) {
-            VirtualFile root = roots[i];
-            log.debug("root " + root.getPath());
-            index.iterateContentUnderDirectory(root, content);
-        }
+        logger.log();
 
         List included = content.getIncluded();
 
@@ -91,9 +80,7 @@ public class RefreshAction extends AnAction {
 
         WindowManager windowManager = WindowManager.getInstance();
         StatusBar statusBar = windowManager.getStatusBar(project);
-        statusBar.setInfo("filter refreshed in " + delta + "ms; " + logger);
-
-        logger.log();
+        statusBar.setInfo("filter refreshed in " + delta + "ms; " + content);
 
         // TODO: decide how to do logical combination of selection based on the information above
         // i.e. if two statuses and two file types are selected for inclusion what is the expected result

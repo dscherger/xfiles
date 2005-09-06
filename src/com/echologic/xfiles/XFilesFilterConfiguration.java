@@ -15,6 +15,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 
 /**
+ * TODO: consider ExternalizableFilterConfiguration and EditableFilterConfiguration
+ * TODO:     also ExternalizablePluginConfiguration and EditablePluginConfiguration
+ *
+ * or ConfigurableFilterModel/ExternalizableFilterModel
+ * 
+ * where plugin configuration represents all of the filter configurations
+ *
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
 public class XFilesFilterConfiguration implements JDOMExternalizable {

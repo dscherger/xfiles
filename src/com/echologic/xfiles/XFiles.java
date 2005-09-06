@@ -54,6 +54,9 @@ public class XFiles implements Configurable, ProjectComponent {
         return null;
     }
 
+    /**
+     * Create the configuration component.
+     */
     public JComponent createComponent() {
         if (editor == null) editor = new XFilesConfigurationEditor(project);
         return editor;
