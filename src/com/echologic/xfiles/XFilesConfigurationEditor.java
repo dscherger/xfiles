@@ -13,8 +13,6 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -22,16 +20,16 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 
@@ -42,13 +40,7 @@ import com.intellij.openapi.project.Project;
  */
 public class XFilesConfigurationEditor extends JPanel {
 
-    private static final Logger log = Logger.getInstance(XFiles.class.getName());
-
-    private Icon addIcon = new ImageIcon(getClass().getResource("/general/add.png"));
-    private Icon removeIcon = new ImageIcon(getClass().getResource("/general/remove.png"));
-    private Icon copyIcon = new ImageIcon(getClass().getResource("/general/copy.png"));
-    private Icon moveUpIcon = new ImageIcon(getClass().getResource("/actions/moveUp.png"));
-    private Icon moveDownIcon = new ImageIcon(getClass().getResource("/actions/moveDown.png"));
+    private Logger log = Logger.getInstance(getClass().getName());
 
     private Project project;
 
@@ -65,16 +57,18 @@ public class XFilesConfigurationEditor extends JPanel {
     //private ConfigurationTable globTable = new ConfigurationTable();
     private ConfigurationTable otherTable = new ConfigurationTable();
 
+    private EnableableAction add = new AddFilterAction();
+    private EnableableAction remove = new RemoveFilterAction();
+    private EnableableAction copy = new CopyFilterAction();
+    private EnableableAction moveUp = new MoveFilterUpAction();
+    private EnableableAction moveDown = new MoveFilterDownAction();
+
     public XFilesConfigurationEditor(Project project) {
         this.project = project;
 
         ActionManager actionManager = ActionManager.getInstance();
 
-        AnAction add = new IconAction("add", "add", addIcon);
-        AnAction remove = new IconAction("remove", "remove", removeIcon);
-        AnAction copy = new IconAction("copy", "copy", copyIcon);
-        AnAction moveUp = new IconAction("move up", "move up", moveUpIcon);
-        AnAction moveDown = new IconAction("move down", "move down", moveDownIcon);
+        add.setEnabled(true);
 
         DefaultActionGroup group = new DefaultActionGroup("xfiles configuration group", false);
         group.add(add);
@@ -93,6 +87,27 @@ public class XFilesConfigurationEditor extends JPanel {
         toolbarComponent.setMaximumSize(toolbarComponent.getPreferredSize());
         filterPanel.add(border(align(toolbar.getComponent())));
         filterPanel.add(border(align(filterList)));
+
+        ListSelectionListener listener = new ListSelectionListener() {
+
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting()) {
+
+                    int selected = filterList.getSelectedIndex();
+                    int first = 0;
+                    int last = filterListModel.getSize() - 1;
+
+                    remove.setEnabled(selected >= first);
+                    copy.setEnabled(selected >= first);
+                    moveUp.setEnabled(selected > first);
+                    moveDown.setEnabled(selected < last);
+                }
+            }
+        };
+
+        ListSelectionModel selection = filterList.getSelectionModel();
+        selection.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        selection.addListSelectionListener(listener);
 
         // config panel //
 
@@ -173,17 +188,10 @@ public class XFilesConfigurationEditor extends JPanel {
         log.debug("reset: " + content + logger);
 
         logger.log();
-        
+
         filterListModel.clear();
         ConfigurableFilterModel selected = new ConfigurableFilterModel(logger);
-        statusTable.setModel(selected.statusModel);
-        typeTable.setModel(selected.typeModel);
-        vcsTable.setModel(selected.vcsModel);
-        moduleTable.setModel(selected.moduleModel);
-        //globTable.setModel(selected.globModel);
-        otherTable.setModel(selected.otherModel);
 
-        /*
         for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
             XFilesFilterConfiguration filterConfig = (XFilesFilterConfiguration) iterator.next();
 
@@ -197,10 +205,12 @@ public class XFilesConfigurationEditor extends JPanel {
             // delete simply removes one element and all of it's models from the list
             // add must create a new element with associated modesl and add it to the list
             // these models must be initialized with the results from running the reset filter
+            /*
             if (filterModel.name.equals(configuration.SELECTED_FILTER)) {
                 selected = filterModel;
                 log.debug("selected filter " + selected.name);
             }
+            */
         }
 
         if (selected != null) {
@@ -211,22 +221,7 @@ public class XFilesConfigurationEditor extends JPanel {
             //globTable.setModel(selected.globModel);
             otherTable.setModel(selected.otherModel);
         }
-        */
 
-    }
-
-    private class IconAction extends AnAction {
-        public IconAction(String text, String description, Icon icon) {
-            super(text, description, icon);
-        }
-
-        public void actionPerformed(AnActionEvent e) {
-        }
-
-        public void update(AnActionEvent e) {
-            Presentation presentation = e.getPresentation();
-            presentation.setEnabled(false);
-        }
     }
 
     private class ConfigurationItem {

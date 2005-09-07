@@ -198,30 +198,11 @@ public class XFilesToolWindow extends JPanel {
 
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                    int first = e.getFirstIndex();
-                    int last = e.getLastIndex();
 
-                    VirtualFile file = null;
-                    if (list.isSelectedIndex(first) && list.isSelectedIndex(last)) {
-                        if (first == last) {
-                            log.debug("selected " + first);
-                            file = (VirtualFile) model.getElementAt(first);
-                        } else {
-                            log.debug("both selected " + first + ", " + last);
-                            return;
-                        }
-                    } else if (list.isSelectedIndex(first)) {
-                        log.debug("selected " + first);
-                        log.debug("unselected " + last);
-                        file = (VirtualFile) model.getElementAt(first);
-                    } else if (list.isSelectedIndex(last)) {
-                        log.debug("unselected " + first);
-                        log.debug("selected " + last);
-                        file = (VirtualFile) model.getElementAt(last);
-                    } else {
-                        log.debug("none selected " + first + ", " + last);
-                        return;
-                    }
+                    // this seems like a safe assumption in SINGLE_SELETION mode
+                    int selected = list.getSelectedIndex();
+                    if (selected == -1) return;
+                    VirtualFile file = (VirtualFile) model.getElementAt(selected);
 
                     if (scrollToSource.isSelected(null)) {
                         editor.openFile(file, false);
