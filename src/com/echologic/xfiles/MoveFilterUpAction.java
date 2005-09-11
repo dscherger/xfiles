@@ -8,8 +8,6 @@ package com.echologic.xfiles;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
@@ -19,9 +17,6 @@ public class MoveFilterUpAction extends EnableableAction {
 
     public MoveFilterUpAction() {
         super("Move Up", "Move Filter Up", ICON);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
     }
 
 }

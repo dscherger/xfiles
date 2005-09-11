@@ -57,11 +57,50 @@ public class XFilesConfigurationEditor extends JPanel {
     //private ConfigurationTable globTable = new ConfigurationTable();
     private ConfigurationTable otherTable = new ConfigurationTable();
 
+    CountingFilterListener counts;
+
+    // TODO: these could all be the same class constructed around their associated commands
+
     private EnableableAction add = new AddFilterAction();
     private EnableableAction remove = new RemoveFilterAction();
     private EnableableAction copy = new CopyFilterAction();
     private EnableableAction moveUp = new MoveFilterUpAction();
     private EnableableAction moveDown = new MoveFilterDownAction();
+
+    public interface Command {
+        public void execute();
+    }
+
+    private Command addCommand = new Command() {
+        public void execute() {
+            addFilter();
+        }
+    };
+
+    private Command removeCommand = new Command() {
+        public void execute() {
+            removeFilter();
+        }
+    };
+
+    private Command copyCommand = new Command() {
+        public void execute() {
+            copyFilter();
+        }
+    };
+
+    private Command moveUpCommand = new Command() {
+        public void execute() {
+            moveFilterUp();
+        }
+    };
+
+    private Command moveDownCommand = new Command() {
+        public void execute() {
+            moveFilterDown();        
+        }
+    };
+
 
     public XFilesConfigurationEditor(Project project) {
         this.project = project;
@@ -69,6 +108,11 @@ public class XFilesConfigurationEditor extends JPanel {
         ActionManager actionManager = ActionManager.getInstance();
 
         add.setEnabled(true);
+        add.setCommand(addCommand);
+        remove.setCommand(removeCommand);
+        copy.setCommand(copyCommand);
+        moveUp.setCommand(moveUpCommand);
+        moveDown.setCommand(moveDownCommand);
 
         DefaultActionGroup group = new DefaultActionGroup("xfiles configuration group", false);
         group.add(add);
@@ -78,6 +122,8 @@ public class XFilesConfigurationEditor extends JPanel {
         group.add(moveDown);
 
         // filter panel //
+
+        // TODO: probably factor out this panel and have it implement ListSelectionListener directly
 
         JPanel filterPanel = new JPanel();
         filterPanel.setLayout(new BoxLayout(filterPanel, BoxLayout.Y_AXIS));
@@ -101,8 +147,22 @@ public class XFilesConfigurationEditor extends JPanel {
                     copy.setEnabled(selected >= first);
                     moveUp.setEnabled(selected > first);
                     moveDown.setEnabled(selected < last);
+
+                    if (selected >= first) {
+                        ConfigurableFilterModel model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
+
+                        // TODO: set the filter name from model.name
+
+                        statusTable.setModel(model.statusModel);
+                        typeTable.setModel(model.typeModel);
+                        vcsTable.setModel(model.vcsModel);
+                        moduleTable.setModel(model.moduleModel);
+                        //globTable.setModel(model.globModel);
+                        otherTable.setModel(model.otherModel);
+                    }
                 }
             }
+
         };
 
         ListSelectionModel selection = filterList.getSelectionModel();
@@ -138,7 +198,81 @@ public class XFilesConfigurationEditor extends JPanel {
         this.add(border(align(filterPanel)));
         this.add(border(align(configPanel)));
         this.add(border(align(testPanel)));
-   }
+    }
+
+    /**
+     * QUESTION: should these be here or in the actions?
+     *
+     * perhaps it would be better to have a single ListAction class
+     * with instances for each operation and either have the instances
+     * hold this class or an adapter to this class to perform the operations?
+     * the actions could be created with operation id's to be passed
+     * back to a ListOperation interface (implemented here) to keep
+     * the actions decoupled from this class. think command pattern,
+     * and have the actions constructed with various list commands
+     * that know about the list and other things they're operating on.
+     *
+     * so in actionPerformed() we simply do command.execute();
+     *
+     * the problem with putting these things in the actions is that the
+     * actions then need access to the list, list mode, and configuration
+     * tables
+     */
+    public void addFilter() {
+        ConfigurableFilterModel filter = new ConfigurableFilterModel(counts);
+        filter.name = "<unnamed>";
+        int index = filterList.getSelectedIndex()+1;
+        filterListModel.add(index, filter);
+        filterList.setSelectedIndex(index);
+    }
+
+    public void removeFilter() {
+        int index = filterList.getSelectedIndex();
+        if (index >= 0) {
+            filterListModel.removeElementAt(index);
+        }
+
+        if (index >= filterListModel.size()) {
+            index = filterListModel.size()-1;
+        }
+
+        if (index >= 0) {
+            filterList.setSelectedIndex(index);
+        } else {
+            // TODO: may need to clear configuration tables if there are no remaining filters
+        }
+    }
+
+    public void copyFilter() {
+        int index = filterList.getSelectedIndex();
+        if (index >= 0) {
+            ConfigurableFilterModel filter = (ConfigurableFilterModel) filterListModel.getElementAt(index);
+            filter = new ConfigurableFilterModel(filter);
+            filter.name = "<unnamed>";
+            filterListModel.add(index, filter);
+            filterList.setSelectedIndex(index);
+        }
+    }
+
+    private void swap(int index1, int index2) {
+        Object element1 = filterListModel.getElementAt(index1);
+        Object element2 = filterListModel.getElementAt(index2);
+
+        filterListModel.setElementAt(element1, index2);
+        filterListModel.setElementAt(element2, index1);
+
+        filterList.setSelectedIndex(index2);
+    }
+
+    public void moveFilterUp() {
+        int index = filterList.getSelectedIndex();
+        swap(index, index - 1);
+    }
+
+    public void moveFilterDown() {
+        int index = filterList.getSelectedIndex();
+        swap(index, index + 1);
+    }
 
     /**
      * For box layout to work well we need to ensure things are aligned consistently.
@@ -158,7 +292,35 @@ public class XFilesConfigurationEditor extends JPanel {
         return c;
     }
 
+    private boolean equals(XFilesFilterConfiguration externalizable, ConfigurableFilterModel configurable) {
+        if (!externalizable.NAME.equals(configurable.name)) return false;
+
+        if (!externalizable.ACCEPTED_STATUS_NAMES.equals(configurable.statusModel.getSelectedItems())) return false;
+        if (!externalizable.ACCEPTED_TYPE_NAMES.equals(configurable.typeModel.getSelectedItems())) return false;
+        if (!externalizable.ACCEPTED_VCS_NAMES.equals(configurable.vcsModel.getSelectedItems())) return false;
+        if (!externalizable.ACCEPTED_MODULE_NAMES.equals(configurable.moduleModel.getSelectedItems())) return false;
+        // (!externalizable.ACCEPTED_GLOB_NAMES.equals(configurable.globModel.getSelectedItems())) return false;
+        if (!externalizable.ACCEPTED_OTHERS.equals(configurable.otherModel.getSelectedItems())) return false;
+
+        // TODO: it would be helpful to have a list of the various lists
+
+        return true;
+    }
+
+    // RANDOM THOUGHT
+    // - ExternalizableFilterConfiguration
+    // - ConfigurableFilterConfiguration
+    // both extending FilterConfiguration which implements .equals()
+
     public boolean isModified(XFilesConfiguration configuration) {
+        if (configuration.CONFIGURED_FILTERS.size() != filterListModel.size()) return true;
+
+        for (int i=0; i<filterListModel.size(); i++) {
+            XFilesFilterConfiguration externalizable = (XFilesFilterConfiguration) configuration.CONFIGURED_FILTERS.get(i);
+            ConfigurableFilterModel configurable = (ConfigurableFilterModel) filterListModel.get(i);
+            if (!equals(externalizable, configurable)) return true;
+        }
+
         return false;
     }
 
@@ -178,50 +340,35 @@ public class XFilesConfigurationEditor extends JPanel {
     public void reset(XFilesConfiguration configuration) {
 
         XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
-        CountingFilterListener logger = new CountingFilterListener();
-        filter.setListener(logger);
+
+        counts = new CountingFilterListener();
+        filter.setListener(counts);
 
         XFilesContentIterator content = new XFilesContentIterator(project);
         content.setFilter(filter);
         content.iterate();
 
-        log.debug("reset: " + content + logger);
+        log.debug("reset: " + content + counts);
 
-        logger.log();
+        counts.log();
 
         filterListModel.clear();
-        ConfigurableFilterModel selected = new ConfigurableFilterModel(logger);
 
         for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
             XFilesFilterConfiguration filterConfig = (XFilesFilterConfiguration) iterator.next();
 
-            ConfigurableFilterModel filterModel = new ConfigurableFilterModel(logger);
+            ConfigurableFilterModel filterModel = new ConfigurableFilterModel(counts);
             filterModel.reset(filterConfig);
 
             filterListModel.addElement(filterModel);
-            // TODO: this model should contain configurable filter models
-            // selection of one element must set the table models to those in the selected filter
-            // and also enable/disable buttons on the configuration toolbar
-            // delete simply removes one element and all of it's models from the list
-            // add must create a new element with associated modesl and add it to the list
-            // these models must be initialized with the results from running the reset filter
-            /*
-            if (filterModel.name.equals(configuration.SELECTED_FILTER)) {
-                selected = filterModel;
-                log.debug("selected filter " + selected.name);
-            }
-            */
         }
 
-        if (selected != null) {
-            statusTable.setModel(selected.statusModel);
-            typeTable.setModel(selected.typeModel);
-            vcsTable.setModel(selected.vcsModel);
-            moduleTable.setModel(selected.moduleModel);
-            //globTable.setModel(selected.globModel);
-            otherTable.setModel(selected.otherModel);
-        }
+        // select the first filter...
+        // TODO: make sure that is at least one filter
+        // TODO: initially select the currently active filter?
+        // could use the selected name from the configuration
 
+        filterList.setSelectedIndex(0);
     }
 
     private class ConfigurationItem {
@@ -240,6 +387,11 @@ public class XFilesConfigurationEditor extends JPanel {
 
         private String name;
         private List items = new ArrayList();
+
+        public ConfigurationTableModel(ConfigurationTableModel that) {
+            this.name = that.name;
+            this.items.addAll(that.items);
+        }
 
         /**
          * specify the name of items in this model
@@ -367,6 +519,7 @@ public class XFilesConfigurationEditor extends JPanel {
         public void setModel(TableModel model) {
             super.setModel(model);
             setPreferredScrollableViewportSize(getPreferredSize());
+            revalidate();
         }
     }
 
@@ -376,6 +529,8 @@ public class XFilesConfigurationEditor extends JPanel {
     private class ConfigurableFilterModel {
 
         private String name;
+
+        // TODO: we may want to hold these in an array
         private ConfigurationTableModel statusModel;
         private ConfigurationTableModel typeModel;
         private ConfigurationTableModel vcsModel;
@@ -383,23 +538,32 @@ public class XFilesConfigurationEditor extends JPanel {
         //private ConfigurationTableModel globModel;
         private ConfigurationTableModel otherModel;
 
-        public ConfigurableFilterModel(CountingFilterListener logger) {
-            // add unselected items and counts for each table in the logger
+        /**
+         * Copy constructor
+         *
+         * @param that
+         */
+        public ConfigurableFilterModel(ConfigurableFilterModel that) {
+            this.name = that.name;
+            this.statusModel = new ConfigurationTableModel(that.statusModel);
+            this.typeModel = new ConfigurationTableModel(that.typeModel);
+            this.vcsModel = new ConfigurationTableModel(that.vcsModel);
+            this.moduleModel = new ConfigurationTableModel(that.moduleModel);
+            //this.globModel = new ConfigurationTableModel(that.globModel);
+            this.otherModel = new ConfigurationTableModel(that.otherModel);
+        }
 
-            // TODO: the idea here is that we initialize the models based on the logger
-            // and then later set the list of selected things
-
-            statusModel = new ConfigurationTableModel(logger.getStatusMap());
-            typeModel = new ConfigurationTableModel(logger.getTypeMap());
-            vcsModel = new ConfigurationTableModel(logger.getVcsMap());
-            moduleModel = new ConfigurationTableModel(logger.getModuleMap());
-            //globModel = new ConfigurationTableModel(logger.getGlobMap());
-            otherModel = new ConfigurationTableModel(logger.getOtherMap());
+        public ConfigurableFilterModel(CountingFilterListener listener) {
+            statusModel = new ConfigurationTableModel(listener.getStatusMap());
+            typeModel = new ConfigurationTableModel(listener.getTypeMap());
+            vcsModel = new ConfigurationTableModel(listener.getVcsMap());
+            moduleModel = new ConfigurationTableModel(listener.getModuleMap());
+            //globModel = new ConfigurationTableModel(listener.getGlobMap());
+            otherModel = new ConfigurationTableModel(listener.getOtherMap());
         }
 
         public void reset(XFilesFilterConfiguration configuration) {
             name = configuration.NAME;
-            // select items
             statusModel.setSelectedItems(configuration.ACCEPTED_STATUS_NAMES);
             typeModel.setSelectedItems(configuration.ACCEPTED_TYPE_NAMES);
             vcsModel.setSelectedItems(configuration.ACCEPTED_VCS_NAMES);
@@ -430,4 +594,5 @@ public class XFilesConfigurationEditor extends JPanel {
             return name;
         }
     }
+
 }

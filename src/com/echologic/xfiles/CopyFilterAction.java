@@ -8,8 +8,6 @@ package com.echologic.xfiles;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
@@ -19,9 +17,6 @@ public class CopyFilterAction extends EnableableAction {
 
     public CopyFilterAction() {
         super("Copy", "Copy Filter", ICON);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
     }
 
 }

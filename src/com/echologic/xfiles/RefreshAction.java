@@ -58,14 +58,14 @@ public class RefreshAction extends AnAction {
 
         final Project project = (Project) event.getDataContext().getData(DataConstants.PROJECT);
 
-        CountingFilterListener logger = new CountingFilterListener();
-        filter.setListener(logger);
+        CountingFilterListener listener = new CountingFilterListener();
+        filter.setListener(listener);
 
         XFilesContentIterator content = new XFilesContentIterator(project);
         content.setFilter(filter);
         content.iterate();
 
-        logger.log();
+        listener.log();
 
         List included = content.getIncluded();
 
@@ -80,7 +80,7 @@ public class RefreshAction extends AnAction {
 
         WindowManager windowManager = WindowManager.getInstance();
         StatusBar statusBar = windowManager.getStatusBar(project);
-        statusBar.setInfo("filter refreshed in " + delta + "ms; " + content);
+        statusBar.setInfo("filter refreshed in " + delta + "ms; " + content + listener);
 
         // TODO: decide how to do logical combination of selection based on the information above
         // i.e. if two statuses and two file types are selected for inclusion what is the expected result

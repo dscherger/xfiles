@@ -18,6 +18,8 @@ public abstract class EnableableAction extends AnAction {
 
     private boolean enabled;
 
+    private XFilesConfigurationEditor.Command command;
+
     protected EnableableAction(String text, String description, Icon icon) {
         super(text, description, icon);
     }
@@ -39,4 +41,11 @@ public abstract class EnableableAction extends AnAction {
         presentation.setEnabled(enabled);
     }
 
+    public void setCommand(XFilesConfigurationEditor.Command command) {
+        this.command = command;
+    }
+    
+    public void actionPerformed(AnActionEvent e) {
+        command.execute();
+    }
 }

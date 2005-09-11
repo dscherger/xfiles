@@ -50,9 +50,9 @@ public class FilterListComboBoxAction extends ComboBoxAction {
 
         filter = new XFilesFilterConfiguration();
         filter.NAME = "config files";
-        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PROPERTIES.getName());
-        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.XML.getName());
-        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.DTD.getName());
+        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PROPERTIES.getDescription());
+        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.XML.getDescription());
+        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.DTD.getDescription());
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
@@ -64,13 +64,13 @@ public class FilterListComboBoxAction extends ComboBoxAction {
 
         filter = new XFilesFilterConfiguration();
         filter.NAME = "text files";
-        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PLAIN_TEXT.getName());
+        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PLAIN_TEXT.getDescription());
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
         filter.NAME = "unknown files";
         filter.ACCEPTED_STATUS_NAMES.add(FileStatus.UNKNOWN.getText());
-        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.UNKNOWN.getName());
+        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.UNKNOWN.getDescription());
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
@@ -89,16 +89,6 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         configuration.CONFIGURED_FILTERS.add(filter);
 
         filter = new XFilesFilterConfiguration();
-        filter.NAME = "all files";
-        filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.FILE);
-        configuration.CONFIGURED_FILTERS.add(filter);
-
-        filter = new XFilesFilterConfiguration();
-        filter.NAME = "all directories";
-        filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.DIRECTORY);
-        configuration.CONFIGURED_FILTERS.add(filter);
-
-        filter = new XFilesFilterConfiguration();
         filter.NAME = "hibernate mappings";
         filter.ACCEPTED_NAME_GLOBS.add("*.hbm.xml");
         configuration.CONFIGURED_FILTERS.add(filter);
@@ -113,6 +103,7 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         presentation.setText(selection.getName());
         refreshAction.setFilter(selection.getFilter());
         refreshAction.actionPerformed(event);
+        // TODO: update the persisted configuration with the new filter selection
     }
 
     /**

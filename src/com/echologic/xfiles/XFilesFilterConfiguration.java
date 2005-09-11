@@ -31,6 +31,7 @@ public class XFilesFilterConfiguration implements JDOMExternalizable {
     public String NAME;
 
     // TODO: match any/all conditions
+    // TODO: these would be nice in an array which the default externalizer doesn't seem to handle
 
     public JDOMExternalizableStringList ACCEPTED_STATUS_NAMES = new JDOMExternalizableStringList();
     public JDOMExternalizableStringList ACCEPTED_TYPE_NAMES = new JDOMExternalizableStringList();
