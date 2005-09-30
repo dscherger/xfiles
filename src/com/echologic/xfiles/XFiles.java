@@ -6,7 +6,6 @@
 package com.echologic.xfiles;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
 import com.intellij.openapi.components.ProjectComponent;
@@ -29,7 +28,6 @@ public class XFiles implements Configurable, ProjectComponent {
     private Logger log = Logger.getInstance(getClass().getName());
 
     public static final String TOOL_WINDOW_ID = "XFiles";
-    public static final Icon TOOL_WINDOW_ICON = new ImageIcon(XFiles.class.getResource("/objectBrowser/visibilitySort.png"));
 
     private Project project;
     private XFilesConfiguration configuration;
@@ -46,7 +44,7 @@ public class XFiles implements Configurable, ProjectComponent {
     }
 
     public Icon getIcon() {
-        return TOOL_WINDOW_ICON;
+        return XFilesIcons.XFILES_ICON;
     }
 
     public String getHelpTopic() {
@@ -111,7 +109,7 @@ public class XFiles implements Configurable, ProjectComponent {
                                                        new XFilesToolWindow(project),
                                                        ToolWindowAnchor.LEFT);
         window.setTitle(project.getName());
-        window.setIcon(TOOL_WINDOW_ICON);
+        window.setIcon(XFilesIcons.XFILES_ICON);
     }
 
     public void projectClosed() {

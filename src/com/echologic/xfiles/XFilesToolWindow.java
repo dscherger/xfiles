@@ -6,8 +6,6 @@
 package com.echologic.xfiles;
 
 import java.awt.BorderLayout;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -18,8 +16,8 @@ import javax.swing.event.ListSelectionListener;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -40,20 +38,9 @@ public class XFilesToolWindow extends JPanel {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
-    private Icon SCROLL_TO_ICON = new ImageIcon(getClass().getResource("/general/autoscrollToSource.png"));
-    private Icon SCROLL_FROM_ICON = new ImageIcon(getClass().getResource("/general/autoscrollFromSource.png"));
-
     private AnAction configure = new EditConfigurationsAction();
-
-    // TODO: move these to public static constants in ScrollAction
-
-    private ScrollAction scrollToSource = new ScrollAction("Autoscroll to Source",
-                                                           "Enable/Disable Autoscroll to Source",
-                                                           SCROLL_TO_ICON);
-
-    private ScrollAction scrollFromSource = new ScrollAction("Autoscroll from Source",
-                                                             "Enable/Disable Autoscroll from Source",
-                                                             SCROLL_FROM_ICON);
+    private ScrollAction scrollToSource = ScrollAction.scrollToSource();
+    private ScrollAction scrollFromSource = ScrollAction.scrollFromSource();
 
     private XFilesListModel model = new XFilesListModel();
     private JList list = new JList(model);

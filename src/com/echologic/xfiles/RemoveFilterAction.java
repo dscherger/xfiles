@@ -5,18 +5,13 @@
  */
 package com.echologic.xfiles;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
 public class RemoveFilterAction extends EnableableAction {
 
-    private static Icon ICON = new ImageIcon(RemoveFilterAction.class.getResource("/general/remove.png"));
-
     public RemoveFilterAction() {
-        super("Remove", "Remove Filter", ICON);
+        super("Remove", "Remove Filter", XFilesIcons.REMOVE_ICON);
     }
 
 }

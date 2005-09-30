@@ -5,9 +5,6 @@
  */
 package com.echologic.xfiles;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -32,10 +29,8 @@ import com.intellij.openapi.project.Project;
  */
 public class EditConfigurationsAction extends AnAction {
 
-    private static Icon icon = new ImageIcon(RefreshAction.class.getResource("/actions/properties.png"));
-
     public EditConfigurationsAction() {
-        super("Edit Configurations", "Edit Configurations", icon);
+        super("Edit Configurations", "Edit Configurations", XFilesIcons.PROPERTIES_ICON);
     }
 
     public void actionPerformed(AnActionEvent event) {

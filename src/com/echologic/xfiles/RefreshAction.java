@@ -7,19 +7,17 @@ package com.echologic.xfiles;
 
 import java.util.Iterator;
 import java.util.List;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -28,13 +26,11 @@ public class RefreshAction extends AnAction {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
-    private static Icon icon = new ImageIcon(RefreshAction.class.getResource("/actions/sync.png"));
-
     private XFilesListModel model;
     private XFilesVirtualFileFilter filter;
 
     public RefreshAction(XFilesListModel model) {
-        super("refresh filter", "refresh filter", icon);
+        super("refresh filter", "refresh filter", XFilesIcons.SYNC_ICON);
         this.model = model;
     }
 

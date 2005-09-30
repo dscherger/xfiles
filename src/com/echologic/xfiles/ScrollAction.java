@@ -17,8 +17,20 @@ public class ScrollAction extends ToggleAction {
 
     boolean selected;
 
-    public ScrollAction(String text, String description, Icon icon) {
+    private ScrollAction(String text, String description, Icon icon) {
         super(text, description, icon);
+    }
+
+    public static ScrollAction scrollToSource() {
+        return new ScrollAction("Autoscroll to Source",
+                                "Enable/Disable Autoscroll to Source",
+                                XFilesIcons.SCROLL_TO_ICON);
+    }
+
+    public static ScrollAction scrollFromSource() {
+        return new ScrollAction("Autoscroll from Source",
+                                "Enable/Disable Autoscroll from Source",
+                                XFilesIcons.SCROLL_FROM_ICON);
     }
 
     public boolean isSelected(AnActionEvent event) {

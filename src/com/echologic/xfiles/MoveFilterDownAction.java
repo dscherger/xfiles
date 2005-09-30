@@ -5,18 +5,13 @@
  */
 package com.echologic.xfiles;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
 public class MoveFilterDownAction extends EnableableAction {
 
-    private static Icon ICON = new ImageIcon(MoveFilterDownAction.class.getResource("/actions/moveDown.png"));
-
     public MoveFilterDownAction() {
-        super("Move Down", "Move Filter Down", ICON);
+        super("Move Down", "Move Filter Down", XFilesIcons.DOWN_ICON);
     }
 
 }

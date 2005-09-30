@@ -5,18 +5,13 @@
  */
 package com.echologic.xfiles;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
 public class AddFilterAction extends EnableableAction {
 
-    private static Icon ICON = new ImageIcon(AddFilterAction.class.getResource("/general/add.png"));
-
     public AddFilterAction() {
-        super("Add", "Add Filter", ICON);
+        super("Add", "Add Filter", XFilesIcons.ADD_ICON);
     }
 
 }

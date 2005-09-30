@@ -5,9 +5,6 @@
  */
 package com.echologic.xfiles;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,9 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
  */
 public class SelectFilterAction extends AnAction {
 
-    private Logger log = Logger.getInstance(SelectFilterAction.class.getName());
-
-    private static Icon ICON = new ImageIcon(SelectFilterAction.class.getResource("/debugger/class_filter.png"));
+    private Logger log = Logger.getInstance(getClass().getName());
 
     private String name;
     private FilterListComboBoxAction filters;
@@ -31,7 +26,7 @@ public class SelectFilterAction extends AnAction {
     // TODO: do we need to hold the filter here, or just it's name to use for a lookup?
 
     public SelectFilterAction(FilterListComboBoxAction filters, String name, XFilesVirtualFileFilter filter) {
-        super(name, "description", ICON);
+        super(name, "description", XFilesIcons.FILTER_ICON);
         this.filters = filters;
         this.name = name;
         this.filter = filter;
