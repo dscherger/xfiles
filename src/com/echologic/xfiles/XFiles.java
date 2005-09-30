@@ -12,7 +12,6 @@ import javax.swing.JComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -27,7 +26,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
  */
 public class XFiles implements Configurable, ProjectComponent {
 
-    private static final Logger log = Logger.getInstance(XFiles.class.getName());
+    private Logger log = Logger.getInstance(getClass().getName());
 
     public static final String TOOL_WINDOW_ID = "XFiles";
     public static final Icon TOOL_WINDOW_ICON = new ImageIcon(XFiles.class.getResource("/objectBrowser/visibilitySort.png"));
@@ -71,17 +70,13 @@ public class XFiles implements Configurable, ProjectComponent {
      * @return true if the configuration has changed
      */
     public boolean isModified() {
-        log.debug("isModified");
         return editor.isModified(configuration);
     }
 
     /**
      * Apply the current values in the configuration editor to the saved configuration.
-     *
-     * @throws ConfigurationException
      */
-    public void apply() throws ConfigurationException {
-        log.debug("apply");
+    public void apply() {
         editor.apply(configuration);
     }
 
@@ -89,7 +84,6 @@ public class XFiles implements Configurable, ProjectComponent {
      * Reset the values in the configuration editor from those in the saved configuration.
      */
     public void reset() {
-        log.debug("reset");
         editor.reset(configuration);
     }
 

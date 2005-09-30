@@ -37,6 +37,16 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
 
     public List CONFIGURED_FILTERS = new ArrayList();
 
+    private FilterListComboBoxAction listener;
+
+    public FilterListComboBoxAction getListener() {
+        return listener;
+    }
+
+    public void setListener(FilterListComboBoxAction listener) {
+        this.listener = listener;
+    }
+    
     // ProjectComponent methods
 
     public void projectOpened() {}
@@ -54,7 +64,7 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
      * Read configuration settings from the DOM subtree rooted at the specified element.
      */
     public void readExternal(Element root) throws InvalidDataException {
-        log.debug("readExternal");
+        //log.debug("readExternal");
 
         SCROLL_TO_SOURCE = JDOMExternalizer.readBoolean(root, SCROLL_TO_SOURCE_NODE);
         SCROLL_FROM_SOURCE = JDOMExternalizer.readBoolean(root, SCROLL_FROM_SOURCE_NODE);
@@ -70,14 +80,14 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
             configuration.readExternal(filter);
         }
 
-        log.debug("readExternal: " + CONFIGURED_FILTERS.size() + " filters");
+        //log.debug("readExternal: " + CONFIGURED_FILTERS.size() + " filters");
     }
 
     /**
      * Write configuration settings to the DOM subtree rooted at the specified element.
      */
     public void writeExternal(Element root) throws WriteExternalException {
-        log.debug("writeExternal");
+        //log.debug("writeExternal");
 
         JDOMExternalizer.write(root, SCROLL_TO_SOURCE_NODE, SCROLL_TO_SOURCE);
         JDOMExternalizer.write(root, SCROLL_FROM_SOURCE_NODE, SCROLL_FROM_SOURCE);
@@ -86,7 +96,7 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
         Element list = new Element(CONFIGURED_FILTERS_NODE);
         root.addContent(list);
 
-        log.debug("writeExternal: " + CONFIGURED_FILTERS.size() + " filters");
+        //log.debug("writeExternal: " + CONFIGURED_FILTERS.size() + " filters");
 
         for (Iterator iterator = CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
             XFilesFilterConfiguration configuration = (XFilesFilterConfiguration) iterator.next();

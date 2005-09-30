@@ -7,9 +7,11 @@ package com.echologic.xfiles;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Collections;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
@@ -22,6 +24,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.JTabbedPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -177,13 +180,16 @@ public class XFilesConfigurationEditor extends JPanel {
         JLabel filterNameLabel = new JLabel("Filter Name:");
         configPanel.add(border(align(filterNameLabel)));
 
-        configPanel.add(statusTable.getScrollPane());
-        configPanel.add(typeTable.getScrollPane());
-        configPanel.add(vcsTable.getScrollPane());
-        configPanel.add(moduleTable.getScrollPane());
-        configPanel.add(otherTable.getScrollPane());
-        //configPanel.add(globTable.getScrollPane());
+        JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabs.add("status", statusTable.getScrollPane());
+        tabs.add("type", typeTable.getScrollPane());
+        tabs.add("vcs", vcsTable.getScrollPane());
+        tabs.add("module", moduleTable.getScrollPane());
+        //tabs.add("glob", globTable.getScrollPane());
+        tabs.add("other", otherTable.getScrollPane());
 
+        configPanel.add(tabs);
+        
         // test panel //
 
         JPanel testPanel = new JPanel();
@@ -292,15 +298,23 @@ public class XFilesConfigurationEditor extends JPanel {
         return c;
     }
 
-    private boolean equals(XFilesFilterConfiguration externalizable, ConfigurableFilterModel configurable) {
-        if (!externalizable.NAME.equals(configurable.name)) return false;
+    private boolean equals(String name, Object a, Object b) {
+        if (a.equals(b)) return true;
+        log.debug(name + " differs");
+        log.debug(a.toString());
+        log.debug(b.toString());
+        return false;
+    }
 
-        if (!externalizable.ACCEPTED_STATUS_NAMES.equals(configurable.statusModel.getSelectedItems())) return false;
-        if (!externalizable.ACCEPTED_TYPE_NAMES.equals(configurable.typeModel.getSelectedItems())) return false;
-        if (!externalizable.ACCEPTED_VCS_NAMES.equals(configurable.vcsModel.getSelectedItems())) return false;
-        if (!externalizable.ACCEPTED_MODULE_NAMES.equals(configurable.moduleModel.getSelectedItems())) return false;
-        // (!externalizable.ACCEPTED_GLOB_NAMES.equals(configurable.globModel.getSelectedItems())) return false;
-        if (!externalizable.ACCEPTED_OTHERS.equals(configurable.otherModel.getSelectedItems())) return false;
+    private boolean equals(XFilesFilterConfiguration externalizable, ConfigurableFilterModel configurable) {
+        if (!equals("name", externalizable.NAME, configurable.name)) return false;
+
+        if (!equals("status", externalizable.ACCEPTED_STATUS_NAMES,  configurable.statusModel.getSelectedItems())) return false;
+        if (!equals("type", externalizable.ACCEPTED_TYPE_NAMES, configurable.typeModel.getSelectedItems())) return false;
+        if (!equals("vcs", externalizable.ACCEPTED_VCS_NAMES, configurable.vcsModel.getSelectedItems())) return false;
+        if (!equals("module", externalizable.ACCEPTED_MODULE_NAMES, configurable.moduleModel.getSelectedItems())) return false;
+        // (!equals("glob", externalizable.ACCEPTED_GLOB_NAMES, configurable.globModel.getSelectedItems())) return false;
+        if (!equals("other", externalizable.ACCEPTED_OTHERS, configurable.otherModel.getSelectedItems())) return false;
 
         // TODO: it would be helpful to have a list of the various lists
 
@@ -313,12 +327,18 @@ public class XFilesConfigurationEditor extends JPanel {
     // both extending FilterConfiguration which implements .equals()
 
     public boolean isModified(XFilesConfiguration configuration) {
-        if (configuration.CONFIGURED_FILTERS.size() != filterListModel.size()) return true;
+        if (configuration.CONFIGURED_FILTERS.size() != filterListModel.size()) {
+            log.debug("size modified");
+            return true;
+        }
 
         for (int i=0; i<filterListModel.size(); i++) {
             XFilesFilterConfiguration externalizable = (XFilesFilterConfiguration) configuration.CONFIGURED_FILTERS.get(i);
             ConfigurableFilterModel configurable = (ConfigurableFilterModel) filterListModel.get(i);
-            if (!equals(externalizable, configurable)) return true;
+            if (!equals(externalizable, configurable)) {
+                log.debug("configuration " + externalizable.NAME + " modified");
+                return true;
+            }
         }
 
         return false;
@@ -330,11 +350,22 @@ public class XFilesConfigurationEditor extends JPanel {
      * @param configuration
      */
     public void apply(XFilesConfiguration configuration) {
+        configuration.CONFIGURED_FILTERS = new ArrayList();
+
+        for (int i=0; i<filterListModel.size(); i++) {
+            ConfigurableFilterModel configurable = (ConfigurableFilterModel) filterListModel.get(i);
+            XFilesFilterConfiguration externalizable = new XFilesFilterConfiguration();
+            configurable.apply(externalizable);
+            configuration.CONFIGURED_FILTERS.add(externalizable);
+        }
+
+        // TODO: sort out this (and other) bidirectional dependency
+        configuration.getListener().configurePopupActionGroup();
     }
 
     /**
      * Reset the current values in this editor from the specified configuration.
-     *
+     *     basically,
      * @param configuration
      */
     public void reset(XFilesConfiguration configuration) {
@@ -364,14 +395,14 @@ public class XFilesConfigurationEditor extends JPanel {
         }
 
         // select the first filter...
-        // TODO: make sure that is at least one filter
+        // TODO: make sure that there is at least one filter
         // TODO: initially select the currently active filter?
         // could use the selected name from the configuration
 
         filterList.setSelectedIndex(0);
     }
 
-    private class ConfigurationItem {
+    private class ConfigurationItem implements Comparable {
         private Boolean included;
         private String text;
         private Integer count;
@@ -381,12 +412,20 @@ public class XFilesConfigurationEditor extends JPanel {
             this.text = text;
             this.count = Integer.valueOf(count);
         }
+
+        public int compareTo(Object o) {
+            ConfigurationItem that = (ConfigurationItem) o;
+            return this.text.compareTo(that.text);
+        }
     }
 
     private class ConfigurationTableModel extends AbstractTableModel {
 
         private String name;
         private List items = new ArrayList();
+
+        public ConfigurationTableModel() {
+        }
 
         public ConfigurationTableModel(ConfigurationTableModel that) {
             this.name = that.name;
@@ -406,14 +445,13 @@ public class XFilesConfigurationEditor extends JPanel {
                 VirtualFileCounter counter = (VirtualFileCounter) iterator.next();
                 items.add(new ConfigurationItem(false, counter.getName(), counter.getCount()));
             }
+
+            // sorted so that comparisons work properly
+            Collections.sort(items);
         }
 
         public String getName() {
             return name;
-        }
-
-        public void add(ConfigurationItem item) {
-            items.add(item);
         }
 
         public int getRowCount() {
@@ -479,25 +517,35 @@ public class XFilesConfigurationEditor extends JPanel {
         }
 
         /**
-         * Set the list of selected item names
+         * Set the list of selected item names. This sets the selection on existing items included
+         * in the selected list and then adds any items in the selected list.
+         *
+         * Alternatively we could hold items in a map keyed by name with selected/count values.
+         * This would allow for iterating over the selected list and simply checking the map
+         * for existing values. 
          *
          * @param selected
          */
         public void setSelectedItems(List selected) {
+            List temp = new ArrayList();
+            temp.addAll(selected);
+
             for (Iterator iterator = items.iterator(); iterator.hasNext();) {
                 ConfigurationItem item = (ConfigurationItem) iterator.next();
 
-                if (selected.remove(item.text))
+                if (temp.remove(item.text))
                     item.included = Boolean.TRUE;
                 else
                     item.included = Boolean.FALSE;
             }
 
-            for (Iterator iterator = selected.iterator(); iterator.hasNext();) {
+            for (Iterator iterator = temp.iterator(); iterator.hasNext();) {
                 String text = (String) iterator.next();
                 ConfigurationItem item = new ConfigurationItem(true, text, 0);
                 items.add(item);
             }
+
+            Collections.sort(items);
         }
 
     }
@@ -509,6 +557,7 @@ public class XFilesConfigurationEditor extends JPanel {
                                                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         public ConfigurationTable() {
+            super(new ConfigurationTableModel());
             setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
         }
 
@@ -518,8 +567,20 @@ public class XFilesConfigurationEditor extends JPanel {
 
         public void setModel(TableModel model) {
             super.setModel(model);
+
+            ConfigurationTableModel config = (ConfigurationTableModel) model;
+            log.debug("setModel " + config.name);
+
+            Dimension d1 = getPreferredSize();
+            log.debug("preferred size " + d1);
+            Dimension d2 = getPreferredScrollableViewportSize();
+            log.debug("viewport size " + d2);
+
             setPreferredScrollableViewportSize(getPreferredSize());
             revalidate();
+
+            Dimension d3 = getPreferredScrollableViewportSize();
+            log.debug("viewport size " + d3);
         }
     }
 
@@ -573,6 +634,8 @@ public class XFilesConfigurationEditor extends JPanel {
         }
 
         public void apply(XFilesFilterConfiguration configuration) {
+            log.debug("saving filter " + name);
+            configuration.log();
             configuration.NAME = name;
 
             configuration.ACCEPTED_STATUS_NAMES.clear();
@@ -588,6 +651,7 @@ public class XFilesConfigurationEditor extends JPanel {
             configuration.ACCEPTED_MODULE_NAMES.addAll(moduleModel.getSelectedItems());
             //configuration.ACCEPTED_NAME_GLOBS.addAll(globModel.getSelectedItems());
             configuration.ACCEPTED_OTHERS.addAll(otherModel.getSelectedItems());
+            configuration.log();
         }
 
         public String toString() {

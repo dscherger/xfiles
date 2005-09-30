@@ -5,12 +5,12 @@
  */
 package com.echologic.xfiles;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.diagnostic.Logger;
 
 import org.jdom.Element;
 
@@ -42,12 +42,21 @@ public class XFilesFilterConfiguration implements JDOMExternalizable {
 
     public void readExternal(Element element) throws InvalidDataException {
         DefaultJDOMExternalizer.readExternal(this, element);
-        log.debug("readExternal: " + NAME);
+        //log.debug("readExternal: " + NAME);
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
-        log.debug("writeExternal: " + NAME);
+        //log.debug("writeExternal: " + NAME);
         DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+
+    public void log() {
+        log.debug("status " + ACCEPTED_STATUS_NAMES);
+        log.debug("type " + ACCEPTED_TYPE_NAMES);
+        log.debug("vcs " + ACCEPTED_VCS_NAMES);
+        log.debug("module " + ACCEPTED_MODULE_NAMES);
+        //log.debug("glob " + ACCEPTED_NAME_GLOBS);
+        log.debug("other " + ACCEPTED_OTHERS);
     }
 
 }

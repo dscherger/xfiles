@@ -6,6 +6,7 @@
 package com.echologic.xfiles;
 
 import java.util.Iterator;
+import java.util.Collections;
 import javax.swing.JComponent;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -41,59 +42,68 @@ public class FilterListComboBoxAction extends ComboBoxAction {
 
     public void setConfiguration(XFilesConfiguration configuration) {
         this.configuration = configuration;
+        configuration.setListener(this);
 
         log.debug("initializing configuration");
 
-        // intitialize with some sensible values until we're persisting properly
+        configuration.SCROLL_FROM_SOURCE = true;
+        configuration.SCROLL_TO_SOURCE = true;
 
-        XFilesFilterConfiguration filter;
+        if (configuration.CONFIGURED_FILTERS.isEmpty()) {
 
-        filter = new XFilesFilterConfiguration();
-        filter.NAME = "config files";
-        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PROPERTIES.getDescription());
-        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.XML.getDescription());
-        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.DTD.getDescription());
-        configuration.CONFIGURED_FILTERS.add(filter);
+            // intitialize with some sensible values until we're persisting properly
 
-        filter = new XFilesFilterConfiguration();
-        filter.NAME = "changed files";
-        filter.ACCEPTED_STATUS_NAMES.add(FileStatus.ADDED.getText());
-        filter.ACCEPTED_STATUS_NAMES.add(FileStatus.DELETED.getText());
-        filter.ACCEPTED_STATUS_NAMES.add(FileStatus.MODIFIED.getText());
-        configuration.CONFIGURED_FILTERS.add(filter);
+            XFilesFilterConfiguration filter;
 
-        filter = new XFilesFilterConfiguration();
-        filter.NAME = "text files";
-        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PLAIN_TEXT.getDescription());
-        configuration.CONFIGURED_FILTERS.add(filter);
+            filter = new XFilesFilterConfiguration();
+            filter.NAME = "config files";
+            filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PROPERTIES.getDescription());
+            filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.XML.getDescription());
+            filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.DTD.getDescription());
+            Collections.sort(filter.ACCEPTED_TYPE_NAMES);
+            configuration.CONFIGURED_FILTERS.add(filter);
 
-        filter = new XFilesFilterConfiguration();
-        filter.NAME = "unknown files";
-        filter.ACCEPTED_STATUS_NAMES.add(FileStatus.UNKNOWN.getText());
-        filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.UNKNOWN.getDescription());
-        configuration.CONFIGURED_FILTERS.add(filter);
+            filter = new XFilesFilterConfiguration();
+            filter.NAME = "changed files";
+            filter.ACCEPTED_STATUS_NAMES.add(FileStatus.ADDED.getText());
+            filter.ACCEPTED_STATUS_NAMES.add(FileStatus.DELETED.getText());
+            filter.ACCEPTED_STATUS_NAMES.add(FileStatus.MODIFIED.getText());
+            Collections.sort(filter.ACCEPTED_STATUS_NAMES);
+            configuration.CONFIGURED_FILTERS.add(filter);
 
-        filter = new XFilesFilterConfiguration();
-        filter.NAME = "ignored files";
-        filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.IGNORED);
-        configuration.CONFIGURED_FILTERS.add(filter);
+            filter = new XFilesFilterConfiguration();
+            filter.NAME = "text files";
+            filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PLAIN_TEXT.getDescription());
+            configuration.CONFIGURED_FILTERS.add(filter);
 
-        filter = new XFilesFilterConfiguration();
-        filter.NAME = "open files";
-        filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.OPEN);
-        configuration.CONFIGURED_FILTERS.add(filter);
+            filter = new XFilesFilterConfiguration();
+            filter.NAME = "unknown files";
+            filter.ACCEPTED_STATUS_NAMES.add(FileStatus.UNKNOWN.getText());
+            filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.UNKNOWN.getDescription());
+            configuration.CONFIGURED_FILTERS.add(filter);
 
-        filter = new XFilesFilterConfiguration();
-        filter.NAME = "filter files";
-        filter.ACCEPTED_NAME_GLOBS.add("Filter*");
-        configuration.CONFIGURED_FILTERS.add(filter);
+            filter = new XFilesFilterConfiguration();
+            filter.NAME = "ignored files";
+            filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.IGNORED);
+            configuration.CONFIGURED_FILTERS.add(filter);
 
-        filter = new XFilesFilterConfiguration();
-        filter.NAME = "hibernate mappings";
-        filter.ACCEPTED_NAME_GLOBS.add("*.hbm.xml");
-        configuration.CONFIGURED_FILTERS.add(filter);
+            filter = new XFilesFilterConfiguration();
+            filter.NAME = "open files";
+            filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.OPEN);
+            configuration.CONFIGURED_FILTERS.add(filter);
 
-        configuration.SELECTED_FILTER = "open files";
+            filter = new XFilesFilterConfiguration();
+            filter.NAME = "filter files";
+            filter.ACCEPTED_NAME_GLOBS.add("Filter*");
+            configuration.CONFIGURED_FILTERS.add(filter);
+
+            filter = new XFilesFilterConfiguration();
+            filter.NAME = "hibernate mappings";
+            filter.ACCEPTED_NAME_GLOBS.add("*.hbm.xml");
+            configuration.CONFIGURED_FILTERS.add(filter);
+
+            configuration.SELECTED_FILTER = "open files";
+        }
 
         configurePopupActionGroup();
 
@@ -103,7 +113,7 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         presentation.setText(selection.getName());
         refreshAction.setFilter(selection.getFilter());
         refreshAction.actionPerformed(event);
-        // TODO: update the persisted configuration with the new filter selection
+        configuration.SELECTED_FILTER = selection.getName();
     }
 
     /**
@@ -156,11 +166,6 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         } else {
             log.debug("null configuration");
         }
-
-        // TODO: consider adding this to the tool window's toolbar rather than here
-
-        if (group.getChildrenCount() > 0) group.addSeparator();
-        group.add(new EditConfigurationsAction());
 
         if (refreshAction.getFilter() == null) {
             log.debug("null filter selected");

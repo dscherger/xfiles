@@ -19,6 +19,7 @@ import javax.swing.event.ListSelectionListener;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -41,6 +42,10 @@ public class XFilesToolWindow extends JPanel {
 
     private Icon SCROLL_TO_ICON = new ImageIcon(getClass().getResource("/general/autoscrollToSource.png"));
     private Icon SCROLL_FROM_ICON = new ImageIcon(getClass().getResource("/general/autoscrollFromSource.png"));
+
+    private AnAction configure = new EditConfigurationsAction();
+
+    // TODO: move these to public static constants in ScrollAction
 
     private ScrollAction scrollToSource = new ScrollAction("Autoscroll to Source",
                                                            "Enable/Disable Autoscroll to Source",
@@ -70,6 +75,7 @@ public class XFilesToolWindow extends JPanel {
         DefaultActionGroup group = new DefaultActionGroup("xfiles group", false);
         group.add(refresh);
         group.add(selections);
+        group.add(configure);
         group.add(scrollToSource);
         group.add(scrollFromSource);
 

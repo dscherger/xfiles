@@ -5,6 +5,9 @@
  */
 package com.echologic.xfiles;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -13,8 +16,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 
 /**
- * TODO: consider moving this to the plugin toolbar
- *
  * We could significantly simplify the filter configuration problem by allowing configuration
  * of only a single filter. The tool window would then need to allow for add/edit/delete of
  * the filter and also for changing the order of the filters.
@@ -31,8 +32,10 @@ import com.intellij.openapi.project.Project;
  */
 public class EditConfigurationsAction extends AnAction {
 
+    private static Icon icon = new ImageIcon(RefreshAction.class.getResource("/actions/properties.png"));
+
     public EditConfigurationsAction() {
-        super("Edit Configurations");
+        super("Edit Configurations", "Edit Configurations", icon);
     }
 
     public void actionPerformed(AnActionEvent event) {

@@ -85,6 +85,15 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         acceptedOthers = configuration.ACCEPTED_OTHERS;
     }
 
+    public void logConfiguration() {
+        log.debug("status " + acceptedStatusNames);
+        log.debug("type " + acceptedTypeNames);
+        log.debug("vcs " + acceptedVcsNames);
+        log.debug("module " + acceptedModuleNames);
+        //log.debug("glob " + acceptedNameGlobs);
+        log.debug("other " + acceptedOthers);
+    }
+
     public String getName() {
         return name;
     }

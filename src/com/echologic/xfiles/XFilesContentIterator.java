@@ -44,8 +44,9 @@ public class XFilesContentIterator implements ContentIterator {
 
         VirtualFile[] roots = projectRootManager.getContentRoots();
 
-        log.debug("iterating content under roots");
-
+        log.debug("iterating content under roots with filter " + filter.getName());
+        filter.logConfiguration();
+        
         for (int i = 0; i < roots.length; i++) {
             VirtualFile root = roots[i];
             log.debug("root " + root.getPath());
