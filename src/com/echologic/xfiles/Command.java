@@ -8,10 +8,6 @@ package com.echologic.xfiles;
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
-public class RemoveFilterAction extends EnableableAction {
-
-    public RemoveFilterAction() {
-        super("Remove", "Remove Filter", XFilesIcons.REMOVE_ICON);
-    }
-
+public interface Command {
+    void execute();
 }

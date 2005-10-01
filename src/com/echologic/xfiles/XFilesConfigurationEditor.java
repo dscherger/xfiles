@@ -25,6 +25,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -53,6 +54,7 @@ public class XFilesConfigurationEditor extends JPanel {
     private DefaultListModel testListModel = new DefaultListModel();
     private JList testList = new JList(testListModel);
 
+    private JTextField filterNameField = new JTextField(60);
     private ConfigurationTable statusTable = new ConfigurationTable();
     private ConfigurationTable typeTable = new ConfigurationTable();
     private ConfigurationTable vcsTable = new ConfigurationTable();
@@ -62,17 +64,11 @@ public class XFilesConfigurationEditor extends JPanel {
 
     CountingFilterListener counts;
 
-    // TODO: these could all be the same class constructed around their associated commands
-
-    private EnableableAction add = new AddFilterAction();
-    private EnableableAction remove = new RemoveFilterAction();
-    private EnableableAction copy = new CopyFilterAction();
-    private EnableableAction moveUp = new MoveFilterUpAction();
-    private EnableableAction moveDown = new MoveFilterDownAction();
-
-    public interface Command {
-        public void execute();
-    }
+    private CommandAction add = new CommandAction("Add", "Add Filter", XFilesIcons.ADD_ICON);
+    private CommandAction remove = new CommandAction("Remove", "Remove Filter", XFilesIcons.REMOVE_ICON);
+    private CommandAction copy = new CommandAction("Copy", "Copy Filter", XFilesIcons.COPY_ICON);
+    private CommandAction moveUp = new CommandAction("Move Up", "Move Filter Up", XFilesIcons.UP_ICON);
+    private CommandAction moveDown = new CommandAction("Move Down", "Move Filter Down", XFilesIcons.DOWN_ICON);
 
     private Command addCommand = new Command() {
         public void execute() {
@@ -154,7 +150,7 @@ public class XFilesConfigurationEditor extends JPanel {
                     if (selected >= first) {
                         ConfigurableFilterModel model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
 
-                        // TODO: set the filter name from model.name
+                        filterNameField.setText(model.name);
 
                         statusTable.setModel(model.statusModel);
                         typeTable.setModel(model.typeModel);
@@ -177,8 +173,15 @@ public class XFilesConfigurationEditor extends JPanel {
         JPanel configPanel = new JPanel();
         configPanel.setLayout(new BoxLayout(configPanel, BoxLayout.Y_AXIS));
 
+        JPanel namePanel = new JPanel();
+        namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.X_AXIS));
+
         JLabel filterNameLabel = new JLabel("Filter Name:");
-        configPanel.add(border(align(filterNameLabel)));
+
+        namePanel.add(border(align(filterNameLabel)));
+        namePanel.add(border(align(filterNameField)));
+
+        configPanel.add(border(align(namePanel)));
 
         JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.add("status", statusTable.getScrollPane());

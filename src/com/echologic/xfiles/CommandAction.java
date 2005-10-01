@@ -14,18 +14,14 @@ import com.intellij.openapi.actionSystem.Presentation;
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
-public abstract class EnableableAction extends AnAction {
+public class CommandAction extends AnAction {
 
     private boolean enabled;
 
-    private XFilesConfigurationEditor.Command command;
+    private Command command;
 
-    protected EnableableAction(String text, String description, Icon icon) {
+    public CommandAction(String text, String description, Icon icon) {
         super(text, description, icon);
-    }
-
-    public EnableableAction() {
-        super();
     }
 
     public boolean isEnabled() {
@@ -41,7 +37,7 @@ public abstract class EnableableAction extends AnAction {
         presentation.setEnabled(enabled);
     }
 
-    public void setCommand(XFilesConfigurationEditor.Command command) {
+    public void setCommand(Command command) {
         this.command = command;
     }
     

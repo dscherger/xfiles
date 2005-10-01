@@ -26,7 +26,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
  */
 public class FilterListComboBoxAction extends ComboBoxAction {
 
-    private static Logger log = Logger.getInstance(FilterListComboBoxAction.class.getName());
+    private Logger log = Logger.getInstance(getClass().getName());
 
     private Project project;
     private RefreshAction refreshAction;
