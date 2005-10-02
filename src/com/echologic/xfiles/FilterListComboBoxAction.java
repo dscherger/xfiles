@@ -6,7 +6,6 @@
 package com.echologic.xfiles;
 
 import java.util.Iterator;
-import java.util.Collections;
 import javax.swing.JComponent;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -16,8 +15,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 
 /**
  * This class represents a menu of available filter configurations to select from.
@@ -45,64 +42,14 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         configuration.setListener(this);
 
         log.debug("initializing configuration");
+        log.debug("selected " + configuration.SELECTED_FILTER);
+        log.debug("scroll to source " + configuration.SCROLL_TO_SOURCE);
+        log.debug("scroll from source " + configuration.SCROLL_FROM_SOURCE);
+        log.debug(configuration.CONFIGURED_FILTERS.size() + " configured filters");
 
-        configuration.SCROLL_FROM_SOURCE = true;
-        configuration.SCROLL_TO_SOURCE = true;
-
-        if (configuration.CONFIGURED_FILTERS.isEmpty()) {
-
-            // intitialize with some sensible values until we're persisting properly
-
-            XFilesFilterConfiguration filter;
-
-            filter = new XFilesFilterConfiguration();
-            filter.NAME = "config files";
-            filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PROPERTIES.getDescription());
-            filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.XML.getDescription());
-            filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.DTD.getDescription());
-            Collections.sort(filter.ACCEPTED_TYPE_NAMES);
-            configuration.CONFIGURED_FILTERS.add(filter);
-
-            filter = new XFilesFilterConfiguration();
-            filter.NAME = "changed files";
-            filter.ACCEPTED_STATUS_NAMES.add(FileStatus.ADDED.getText());
-            filter.ACCEPTED_STATUS_NAMES.add(FileStatus.DELETED.getText());
-            filter.ACCEPTED_STATUS_NAMES.add(FileStatus.MODIFIED.getText());
-            Collections.sort(filter.ACCEPTED_STATUS_NAMES);
-            configuration.CONFIGURED_FILTERS.add(filter);
-
-            filter = new XFilesFilterConfiguration();
-            filter.NAME = "text files";
-            filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.PLAIN_TEXT.getDescription());
-            configuration.CONFIGURED_FILTERS.add(filter);
-
-            filter = new XFilesFilterConfiguration();
-            filter.NAME = "unknown files";
-            filter.ACCEPTED_STATUS_NAMES.add(FileStatus.UNKNOWN.getText());
-            filter.ACCEPTED_TYPE_NAMES.add(StdFileTypes.UNKNOWN.getDescription());
-            configuration.CONFIGURED_FILTERS.add(filter);
-
-            filter = new XFilesFilterConfiguration();
-            filter.NAME = "ignored files";
-            filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.IGNORED);
-            configuration.CONFIGURED_FILTERS.add(filter);
-
-            filter = new XFilesFilterConfiguration();
-            filter.NAME = "open files";
-            filter.ACCEPTED_OTHERS.add(XFilesVirtualFileFilter.OPEN);
-            configuration.CONFIGURED_FILTERS.add(filter);
-
-            filter = new XFilesFilterConfiguration();
-            filter.NAME = "filter files";
-            filter.ACCEPTED_NAME_GLOBS.add("Filter*");
-            configuration.CONFIGURED_FILTERS.add(filter);
-
-            filter = new XFilesFilterConfiguration();
-            filter.NAME = "hibernate mappings";
-            filter.ACCEPTED_NAME_GLOBS.add("*.hbm.xml");
-            configuration.CONFIGURED_FILTERS.add(filter);
-
-            configuration.SELECTED_FILTER = "open files";
+        for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
+            XFilesFilterConfiguration filter = (XFilesFilterConfiguration) iterator.next();
+            log.debug("filter " + filter.NAME);
         }
 
         configurePopupActionGroup();
@@ -124,6 +71,7 @@ public class FilterListComboBoxAction extends ComboBoxAction {
      */
     public JComponent createCustomComponent(Presentation presentation) {
         this.presentation = presentation;
+        // TODO: this doesn't work when there are no filters!
         presentation.setText(configuration.SELECTED_FILTER);
         presentation.setDescription("change/configure filter selections");
         return super.createCustomComponent(presentation);
@@ -172,6 +120,16 @@ public class FilterListComboBoxAction extends ComboBoxAction {
             XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
             filter.setName("default filter");
             refreshAction.setFilter(filter);
+            configuration.SELECTED_FILTER = filter.getName();
+        } else {
+            log.debug(refreshAction.getFilter().getName() + " filter selected");
+        }
+
+        if (group.getChildrenCount() == 0) {
+            XFilesVirtualFileFilter filter = refreshAction.getFilter();
+            AnAction action = new SelectFilterAction(this, filter.getName(), filter);
+            group.add(action);
+            log.debug("added filter " + filter.getName());
         }
     }
 

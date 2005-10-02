@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 
@@ -34,7 +33,7 @@ public class RefreshAction extends AnAction {
         this.model = model;
     }
 
-    public VirtualFileFilter getFilter() {
+    public XFilesVirtualFileFilter getFilter() {
         return filter;
     }
 

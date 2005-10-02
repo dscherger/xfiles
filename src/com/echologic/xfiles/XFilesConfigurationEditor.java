@@ -5,15 +5,14 @@
  */
 package com.echologic.xfiles;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Collections;
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -21,15 +20,13 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -100,6 +97,51 @@ public class XFilesConfigurationEditor extends JPanel {
         }
     };
 
+    private ListSelectionListener selectionListener = new ListSelectionListener() {
+
+        public void valueChanged(ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting()) {
+
+                int selected = filterList.getSelectedIndex();
+                int first = 0;
+                int last = filterListModel.getSize() - 1;
+
+                remove.setEnabled(selected >= first);
+                copy.setEnabled(selected >= first);
+                moveUp.setEnabled(selected > first);
+                moveDown.setEnabled(selected < last);
+
+                if (selected >= first) {
+                    ConfigurableFilterModel model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
+
+                    filterNameField.setText(model.name);
+
+                    statusTable.setModel(model.statusModel);
+                    typeTable.setModel(model.typeModel);
+                    vcsTable.setModel(model.vcsModel);
+                    moduleTable.setModel(model.moduleModel);
+                    //globTable.setModel(model.globModel);
+                    otherTable.setModel(model.otherModel);
+                }
+            }
+        }
+
+    };
+
+    private FocusListener nameListener = new FocusListener() {
+        public void focusGained(FocusEvent e) {}
+
+        public void focusLost(FocusEvent e) {
+            int selected = filterList.getSelectedIndex();
+
+            if (selected >= 0) {
+                ConfigurableFilterModel model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
+                model.name = filterNameField.getText();
+            }
+        }
+
+    };
+
 
     public XFilesConfigurationEditor(Project project) {
         this.project = project;
@@ -120,113 +162,82 @@ public class XFilesConfigurationEditor extends JPanel {
         group.add(moveUp);
         group.add(moveDown);
 
-        // filter panel //
-
-        // TODO: probably factor out this panel and have it implement ListSelectionListener directly
-
-        JPanel filterPanel = new JPanel();
-        filterPanel.setLayout(new BoxLayout(filterPanel, BoxLayout.Y_AXIS));
-
-        ActionToolbar toolbar = actionManager.createActionToolbar("XFilesConfigurationToolbar", group, true);
-        JComponent toolbarComponent = toolbar.getComponent();
-        toolbarComponent.setMaximumSize(toolbarComponent.getPreferredSize());
-        filterPanel.add(border(align(toolbar.getComponent())));
-        filterPanel.add(border(align(filterList)));
-
-        ListSelectionListener listener = new ListSelectionListener() {
-
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-
-                    int selected = filterList.getSelectedIndex();
-                    int first = 0;
-                    int last = filterListModel.getSize() - 1;
-
-                    remove.setEnabled(selected >= first);
-                    copy.setEnabled(selected >= first);
-                    moveUp.setEnabled(selected > first);
-                    moveDown.setEnabled(selected < last);
-
-                    if (selected >= first) {
-                        ConfigurableFilterModel model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
-
-                        filterNameField.setText(model.name);
-
-                        statusTable.setModel(model.statusModel);
-                        typeTable.setModel(model.typeModel);
-                        vcsTable.setModel(model.vcsModel);
-                        moduleTable.setModel(model.moduleModel);
-                        //globTable.setModel(model.globModel);
-                        otherTable.setModel(model.otherModel);
-                    }
-                }
-            }
-
-        };
+        ActionToolbar actions = actionManager.createActionToolbar("XFilesConfigurationToolbar", group, true);
+        JComponent toolbar = actions.getComponent();
 
         ListSelectionModel selection = filterList.getSelectionModel();
         selection.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        selection.addListSelectionListener(listener);
+        selection.addListSelectionListener(selectionListener);
 
-        // config panel //
+        filterNameField.addFocusListener(nameListener);
 
-        JPanel configPanel = new JPanel();
-        configPanel.setLayout(new BoxLayout(configPanel, BoxLayout.Y_AXIS));
+        setLayout(new GridBagLayout());
+        GridBagConstraints constraints = new GridBagConstraints();
 
-        JPanel namePanel = new JPanel();
-        namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.X_AXIS));
+        ///////////////////////////
+
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.gridwidth = 1;
+        constraints.weightx = 0.0;
+        constraints.weighty = 0.0;
+        constraints.anchor = GridBagConstraints.NORTHWEST;
+        constraints.fill = GridBagConstraints.BOTH;
+
+        add(toolbar, constraints);
+
+        constraints.gridy = 1;
+        constraints.weighty = 10.0;
+
+        add(new ListScrollPane(filterList), constraints);
+
+        ///////////////////////////
 
         JLabel filterNameLabel = new JLabel("Filter Name:");
 
-        namePanel.add(border(align(filterNameLabel)));
-        namePanel.add(border(align(filterNameField)));
+        constraints.gridx = 1;
+        constraints.gridy = 0;
+        constraints.weightx = 0.0;
+        constraints.weighty = 0.0;
 
-        configPanel.add(border(align(namePanel)));
+        add(filterNameLabel, constraints);
+
+        constraints.gridx = 2;
+        constraints.weightx = 10.0;
+
+        add(filterNameField, constraints);
 
         JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
-        tabs.add("status", statusTable.getScrollPane());
-        tabs.add("type", typeTable.getScrollPane());
-        tabs.add("vcs", vcsTable.getScrollPane());
-        tabs.add("module", moduleTable.getScrollPane());
-        //tabs.add("glob", globTable.getScrollPane());
-        tabs.add("other", otherTable.getScrollPane());
+        tabs.add("status", new TableScrollPane(statusTable));
+        tabs.add("type", new TableScrollPane(typeTable));
+        tabs.add("vcs", new TableScrollPane(vcsTable));
+        tabs.add("module", new TableScrollPane(moduleTable));
+        //tabs.add("glob", new TableScrollPane(globTable));
+        tabs.add("other", new TableScrollPane(otherTable));
 
-        configPanel.add(tabs);
+        constraints.gridy = 1;
+        constraints.weightx = 10.0;
+        constraints.weighty = 10.0;
         
-        // test panel //
+        add(tabs, constraints);
 
-        JPanel testPanel = new JPanel();
-        testPanel.setLayout(new BoxLayout(testPanel, BoxLayout.Y_AXIS));
+        ///////////////////////////
 
         JButton testButton = new JButton("Test Filter");
-        testPanel.add(border(align(testButton)));
-        testPanel.add(border(align(testList)));
 
+        constraints.gridx = 3;
+        constraints.gridy = 0;
+        constraints.weightx = 0.0;
+        constraints.weighty = 0.0;
 
-        this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        this.add(border(align(filterPanel)));
-        this.add(border(align(configPanel)));
-        this.add(border(align(testPanel)));
+        add(testButton, constraints);
+
+        constraints.gridy = 1;
+        constraints.weighty = 10.0;
+
+        add(new ListScrollPane(testList), constraints);
     }
 
-    /**
-     * QUESTION: should these be here or in the actions?
-     *
-     * perhaps it would be better to have a single ListAction class
-     * with instances for each operation and either have the instances
-     * hold this class or an adapter to this class to perform the operations?
-     * the actions could be created with operation id's to be passed
-     * back to a ListOperation interface (implemented here) to keep
-     * the actions decoupled from this class. think command pattern,
-     * and have the actions constructed with various list commands
-     * that know about the list and other things they're operating on.
-     *
-     * so in actionPerformed() we simply do command.execute();
-     *
-     * the problem with putting these things in the actions is that the
-     * actions then need access to the list, list mode, and configuration
-     * tables
-     */
     public void addFilter() {
         ConfigurableFilterModel filter = new ConfigurableFilterModel(counts);
         filter.name = "<unnamed>";
@@ -281,24 +292,6 @@ public class XFilesConfigurationEditor extends JPanel {
     public void moveFilterDown() {
         int index = filterList.getSelectedIndex();
         swap(index, index + 1);
-    }
-
-    /**
-     * For box layout to work well we need to ensure things are aligned consistently.
-     *
-     * @param c component to align
-     * @return component aligned top left
-     */
-    private JComponent align(JComponent c) {
-        c.setAlignmentX(Component.LEFT_ALIGNMENT);
-        c.setAlignmentY(Component.TOP_ALIGNMENT);
-        return c;
-    }
-
-    private JComponent border(JComponent c) {
-        c.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.red),
-                                                       c.getBorder()));
-        return c;
     }
 
     private boolean equals(String name, Object a, Object b) {
@@ -402,7 +395,8 @@ public class XFilesConfigurationEditor extends JPanel {
         // TODO: initially select the currently active filter?
         // could use the selected name from the configuration
 
-        filterList.setSelectedIndex(0);
+        if (!filterListModel.isEmpty())
+            filterList.setSelectedIndex(0);
     }
 
     private class ConfigurationItem implements Comparable {
@@ -554,36 +548,21 @@ public class XFilesConfigurationEditor extends JPanel {
     }
 
     private class ConfigurationTable extends JTable {
-
-        private JScrollPane scroller = new JScrollPane(this,
-                                                       ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                                                       ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
         public ConfigurationTable() {
             super(new ConfigurationTableModel());
             setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
         }
+    }
 
-        public JComponent getScrollPane() {
-            return border(align(scroller));
+    private class TableScrollPane extends JScrollPane {
+        public TableScrollPane(JTable table) {
+            super(table, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
         }
+    }
 
-        public void setModel(TableModel model) {
-            super.setModel(model);
-
-            ConfigurationTableModel config = (ConfigurationTableModel) model;
-            log.debug("setModel " + config.name);
-
-            Dimension d1 = getPreferredSize();
-            log.debug("preferred size " + d1);
-            Dimension d2 = getPreferredScrollableViewportSize();
-            log.debug("viewport size " + d2);
-
-            setPreferredScrollableViewportSize(getPreferredSize());
-            revalidate();
-
-            Dimension d3 = getPreferredScrollableViewportSize();
-            log.debug("viewport size " + d3);
+    private class ListScrollPane extends JScrollPane {
+        public ListScrollPane(JList list) {
+            super(list, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
         }
     }
 

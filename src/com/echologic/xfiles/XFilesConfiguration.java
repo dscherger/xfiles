@@ -33,6 +33,9 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
 
     public boolean SCROLL_TO_SOURCE;
     public boolean SCROLL_FROM_SOURCE;
+
+    // TODO: it may be better to store the index of the selected filter here
+    
     public String SELECTED_FILTER;
 
     public List CONFIGURED_FILTERS = new ArrayList();
@@ -64,7 +67,7 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
      * Read configuration settings from the DOM subtree rooted at the specified element.
      */
     public void readExternal(Element root) throws InvalidDataException {
-        //log.debug("readExternal");
+        log.debug("readExternal");
 
         SCROLL_TO_SOURCE = JDOMExternalizer.readBoolean(root, SCROLL_TO_SOURCE_NODE);
         SCROLL_FROM_SOURCE = JDOMExternalizer.readBoolean(root, SCROLL_FROM_SOURCE_NODE);
@@ -73,21 +76,22 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
         Element list = root.getChild(CONFIGURED_FILTERS_NODE);
         List filters = list.getChildren(FILTER_NODE);
 
-
         for (Iterator iterator = filters.iterator(); iterator.hasNext();) {
             Element filter = (Element) iterator.next();
             XFilesFilterConfiguration configuration = new XFilesFilterConfiguration();
             configuration.readExternal(filter);
+            CONFIGURED_FILTERS.add(configuration);
+            log.debug("readExternal: " + configuration.NAME);
         }
 
-        //log.debug("readExternal: " + CONFIGURED_FILTERS.size() + " filters");
+        log.debug("readExternal: " + CONFIGURED_FILTERS.size() + " filters");
     }
 
     /**
      * Write configuration settings to the DOM subtree rooted at the specified element.
      */
     public void writeExternal(Element root) throws WriteExternalException {
-        //log.debug("writeExternal");
+        log.debug("writeExternal");
 
         JDOMExternalizer.write(root, SCROLL_TO_SOURCE_NODE, SCROLL_TO_SOURCE);
         JDOMExternalizer.write(root, SCROLL_FROM_SOURCE_NODE, SCROLL_FROM_SOURCE);
@@ -96,14 +100,15 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
         Element list = new Element(CONFIGURED_FILTERS_NODE);
         root.addContent(list);
 
-        //log.debug("writeExternal: " + CONFIGURED_FILTERS.size() + " filters");
-
         for (Iterator iterator = CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
             XFilesFilterConfiguration configuration = (XFilesFilterConfiguration) iterator.next();
             Element filter = new Element(FILTER_NODE);
             list.addContent(filter);
             configuration.writeExternal(filter);
+            log.debug("writeExternal: " + configuration.NAME);
         }
+
+        log.debug("writeExternal: " + CONFIGURED_FILTERS.size() + " filters");
     }
 
 }

@@ -22,6 +22,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
  * Configurable ApplicationComponent classes presumably appear under IDE settings in the settings panel.
  *
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
+ *
+ * TODO: remove Configurable from this class and implement on XFilesConfigurable
+ * renamed from XFilesConfigurationEditor
+ *
  */
 public class XFiles implements Configurable, ProjectComponent {
 

@@ -127,6 +127,10 @@ public class XFilesToolWindow extends JPanel {
 
                 log.debug("selection changed: old file " + oldName + " new file " + newName + " scroll " + scrollFromSource.isSelected(null));
 
+                // TODO: we need to schedule this to run later, after this event has been handled
+                // do we do the standard swing invokeLater(runnable) thing or is there some other
+                // intellij magic way to do this?
+
                 if (file != null) addAndScroll(file);
             }
         };
