@@ -20,28 +20,23 @@ public class SelectFilterAction extends AnAction {
     private Logger log = Logger.getInstance(getClass().getName());
 
     private String name;
+    private int index;
+    
     private FilterListComboBoxAction filters;
-    private XFilesVirtualFileFilter filter;
 
-    // TODO: do we need to hold the filter here, or just it's name to use for a lookup?
-
-    public SelectFilterAction(FilterListComboBoxAction filters, String name, XFilesVirtualFileFilter filter) {
+    public SelectFilterAction(FilterListComboBoxAction filters, String name, int index) {
         super(name, "description", XFilesIcons.FILTER_ICON);
         this.filters = filters;
         this.name = name;
-        this.filter = filter;
+        this.index = index;
     }
 
     public String getName() {
         return name;
     }
 
-    public XFilesVirtualFileFilter getFilter() {
-        return filter;
-    }
-
     public void actionPerformed(AnActionEvent event) {
         log.debug("selected filter " + name);
-        filters.setSelected(this, event);
+        filters.setSelected(event, index);
     }
 }

@@ -37,10 +37,7 @@ public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
         VirtualFile file = (VirtualFile) value;
         FileType type = file.getFileType();
 
-        // TODO: we may want extensions for non-java files?!?
-        // FIXME: .files have no name without extension!
-        
-        setText(file.getNameWithoutExtension());
+        setText(file.getName());
         setIcon(type.getIcon());
 
         FileStatus status = fileStatusManager.getStatus(file);

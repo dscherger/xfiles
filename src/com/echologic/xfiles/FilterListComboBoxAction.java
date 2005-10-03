@@ -8,7 +8,6 @@ package com.echologic.xfiles;
 import java.util.Iterator;
 import javax.swing.JComponent;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -28,7 +27,14 @@ public class FilterListComboBoxAction extends ComboBoxAction {
     private Project project;
     private RefreshAction refreshAction;
     private XFilesConfiguration configuration;
+
+    // TODO: we should have a class to hold an action and it's associated filter
+    // perhaps we could hold the group in this class too?
+
+    private SelectFilterAction[] actions;
+    private XFilesVirtualFileFilter[] filters;
     private DefaultActionGroup group;
+
     private Presentation presentation;
 
     public FilterListComboBoxAction(Project project, RefreshAction refreshAction) {
@@ -53,14 +59,13 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         }
 
         configurePopupActionGroup();
-
     }
 
-    public void setSelected(SelectFilterAction selection, AnActionEvent event) {
-        presentation.setText(selection.getName());
-        refreshAction.setFilter(selection.getFilter());
+    public void setSelected(AnActionEvent event, int index) {
+        presentation.setText(actions[index].getName());
+        refreshAction.setFilter(filters[index]);
         refreshAction.actionPerformed(event);
-        configuration.SELECTED_FILTER = selection.getName();
+        configuration.SELECTED_FILTER = index;
     }
 
     /**
@@ -71,8 +76,8 @@ public class FilterListComboBoxAction extends ComboBoxAction {
      */
     public JComponent createCustomComponent(Presentation presentation) {
         this.presentation = presentation;
-        // TODO: this doesn't work when there are no filters!
-        presentation.setText(configuration.SELECTED_FILTER);
+        // TODO: probably need something sensible here
+        presentation.setText("filter");
         presentation.setDescription("change/configure filter selections");
         return super.createCustomComponent(presentation);
     }
@@ -92,45 +97,53 @@ public class FilterListComboBoxAction extends ComboBoxAction {
      */
     public void configurePopupActionGroup() {
         log.debug("configurePopupActionGroup");
-        group.removeAll();
 
-        refreshAction.setFilter(null);
+        int size = 0;
+        if (configuration != null) size = configuration.CONFIGURED_FILTERS.size();
 
-        if (configuration != null) {
-            for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
-                XFilesFilterConfiguration config = (XFilesFilterConfiguration) iterator.next();
+        if (size > 0) {
+            actions = new SelectFilterAction[size];
+            filters = new XFilesVirtualFileFilter[size];
+
+            for (int i=0; i<size; i++) {
+                XFilesFilterConfiguration config = (XFilesFilterConfiguration) configuration.CONFIGURED_FILTERS.get(i);
+                SelectFilterAction action = new SelectFilterAction(this, config.NAME, i);
+                actions[i] = action;
+
                 XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
                 filter.setConfiguration(config);
+                filters[i] = filter;
 
-                if (filter.getName().equals(configuration.SELECTED_FILTER)) {
-                    refreshAction.setFilter(filter);
-                    log.debug("selected filter " + configuration.SELECTED_FILTER);
-                }
-
-                AnAction action = new SelectFilterAction(this, filter.getName(), filter);
-                group.add(action);
                 log.debug("added filter " + filter.getName());
             }
-        } else {
-            log.debug("null configuration");
-        }
 
-        if (refreshAction.getFilter() == null) {
-            log.debug("null filter selected");
+        } else {
+            actions = new SelectFilterAction[1];
+            filters = new XFilesVirtualFileFilter[1];
+
+            String name = "default filter";
+
+            SelectFilterAction action = new SelectFilterAction(this, name, 0);
+            actions[0] = action;
+
             XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
-            filter.setName("default filter");
-            refreshAction.setFilter(filter);
-            configuration.SELECTED_FILTER = filter.getName();
-        } else {
-            log.debug(refreshAction.getFilter().getName() + " filter selected");
+            filter.setName(name);
+            filters[0] = filter;
+
+            log.debug("added filter " + filter.getName());
+
+            configuration.SELECTED_FILTER = 0;
         }
 
-        if (group.getChildrenCount() == 0) {
-            XFilesVirtualFileFilter filter = refreshAction.getFilter();
-            AnAction action = new SelectFilterAction(this, filter.getName(), filter);
-            group.add(action);
-            log.debug("added filter " + filter.getName());
+        group.removeAll();
+        for (int i=0; i<actions.length; i++) {
+            group.add(actions[i]);
         }
+
+        XFilesVirtualFileFilter selected = filters[configuration.SELECTED_FILTER];
+        refreshAction.setFilter(selected);
+
+        presentation.setText(configuration.getSelectedFilter().NAME);
     }
 
 }

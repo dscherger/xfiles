@@ -5,15 +5,12 @@
  */
 package com.echologic.xfiles;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
 public class CountingFilterListener implements FilterListener {
-
-    private Logger log = Logger.getInstance(getClass().getName());
 
     private VirtualFileCounterMap statusMap = new VirtualFileCounterMap("file status");
     private VirtualFileCounterMap typeMap = new VirtualFileCounterMap("file type");

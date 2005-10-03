@@ -20,8 +20,10 @@ public class XFilesListModel extends AbstractListModel {
     /**
      * TODO: consider different sort orders
      * - alphabetic
-     * - little endian class order
+     * - little endian class order (camel case order)
      * - hotspot order on number of change events recorded
+     * - file size
+     * - modification stamp
      */
     private VirtualFileComparator comparator = new VirtualFileComparator();
     private List files = new ArrayList();

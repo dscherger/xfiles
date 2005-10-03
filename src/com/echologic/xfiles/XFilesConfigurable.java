@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -31,7 +32,9 @@ import javax.swing.table.AbstractTableModel;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -39,28 +42,33 @@ import com.intellij.openapi.project.Project;
  *
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
-public class XFilesConfigurationEditor extends JPanel {
+public class XFilesConfigurable implements Configurable, ProjectComponent {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
     private Project project;
 
-    private DefaultListModel filterListModel = new DefaultListModel();
-    private JList filterList = new JList(filterListModel);
+    private XFilesConfiguration configuration;
 
-    private DefaultListModel testListModel = new DefaultListModel();
-    private JList testList = new JList(testListModel);
+    private JPanel panel;
 
-    private JTextField filterNameField = new JTextField(60);
-    private ConfigurationTable statusTable = new ConfigurationTable();
-    private ConfigurationTable typeTable = new ConfigurationTable();
-    private ConfigurationTable vcsTable = new ConfigurationTable();
-    private ConfigurationTable moduleTable = new ConfigurationTable();
-    //private ConfigurationTable globTable = new ConfigurationTable();
-    private ConfigurationTable otherTable = new ConfigurationTable();
+    private DefaultListModel filterListModel;
+    private JList filterList;
 
-    CountingFilterListener counts;
+    private DefaultListModel testListModel;
+    private JList testList;
 
+    private JTextField filterNameField;
+    private ConfigurationTable statusTable;
+    private ConfigurationTable typeTable;
+    private ConfigurationTable vcsTable;
+    private ConfigurationTable moduleTable;
+    //private ConfigurationTable globTable;
+    private ConfigurationTable otherTable;
+
+    private CountingFilterListener counts;
+
+    private ActionToolbar actions;
     private CommandAction add = new CommandAction("Add", "Add Filter", XFilesIcons.ADD_ICON);
     private CommandAction remove = new CommandAction("Remove", "Remove Filter", XFilesIcons.REMOVE_ICON);
     private CommandAction copy = new CommandAction("Copy", "Copy Filter", XFilesIcons.COPY_ICON);
@@ -93,7 +101,7 @@ public class XFilesConfigurationEditor extends JPanel {
 
     private Command moveDownCommand = new Command() {
         public void execute() {
-            moveFilterDown();        
+            moveFilterDown();
         }
     };
 
@@ -143,7 +151,7 @@ public class XFilesConfigurationEditor extends JPanel {
     };
 
 
-    public XFilesConfigurationEditor(Project project) {
+    public XFilesConfigurable(Project project) {
         this.project = project;
 
         ActionManager actionManager = ActionManager.getInstance();
@@ -162,17 +170,54 @@ public class XFilesConfigurationEditor extends JPanel {
         group.add(moveUp);
         group.add(moveDown);
 
-        ActionToolbar actions = actionManager.createActionToolbar("XFilesConfigurationToolbar", group, true);
+        actions = actionManager.createActionToolbar("XFilesConfigurationToolbar", group, true);
+    }
+
+    // Configurable methods
+
+    public String getDisplayName() {
+        return "XFiles";
+    }
+
+    public Icon getIcon() {
+        return XFilesIcons.XFILES_ICON;
+    }
+
+    public String getHelpTopic() {
+        return null;
+    }
+
+    /**
+     * Create the configuration component.
+     */
+    public JComponent createComponent() {
+        panel = new JPanel();
+        panel.setLayout(new GridBagLayout());
+
+        GridBagConstraints constraints = new GridBagConstraints();
+
         JComponent toolbar = actions.getComponent();
+
+        filterListModel = new DefaultListModel();
+        filterList = new JList(filterListModel);
+
+        testListModel = new DefaultListModel();
+        testList = new JList(testListModel);
+
+
+        filterNameField = new JTextField();
+        statusTable = new ConfigurationTable();
+        typeTable = new ConfigurationTable();
+        vcsTable = new ConfigurationTable();
+        moduleTable = new ConfigurationTable();
+        //globTable = new ConfigurationTable();
+        otherTable = new ConfigurationTable();
 
         ListSelectionModel selection = filterList.getSelectionModel();
         selection.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         selection.addListSelectionListener(selectionListener);
 
         filterNameField.addFocusListener(nameListener);
-
-        setLayout(new GridBagLayout());
-        GridBagConstraints constraints = new GridBagConstraints();
 
         ///////////////////////////
 
@@ -184,12 +229,12 @@ public class XFilesConfigurationEditor extends JPanel {
         constraints.anchor = GridBagConstraints.NORTHWEST;
         constraints.fill = GridBagConstraints.BOTH;
 
-        add(toolbar, constraints);
+        panel.add(toolbar, constraints);
 
         constraints.gridy = 1;
         constraints.weighty = 10.0;
 
-        add(new ListScrollPane(filterList), constraints);
+        panel.add(new ListScrollPane(filterList), constraints);
 
         ///////////////////////////
 
@@ -200,12 +245,12 @@ public class XFilesConfigurationEditor extends JPanel {
         constraints.weightx = 0.0;
         constraints.weighty = 0.0;
 
-        add(filterNameLabel, constraints);
+        panel.add(filterNameLabel, constraints);
 
         constraints.gridx = 2;
         constraints.weightx = 10.0;
 
-        add(filterNameField, constraints);
+        panel.add(filterNameField, constraints);
 
         JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.add("status", new TableScrollPane(statusTable));
@@ -218,8 +263,8 @@ public class XFilesConfigurationEditor extends JPanel {
         constraints.gridy = 1;
         constraints.weightx = 10.0;
         constraints.weighty = 10.0;
-        
-        add(tabs, constraints);
+
+        panel.add(tabs, constraints);
 
         ///////////////////////////
 
@@ -230,13 +275,124 @@ public class XFilesConfigurationEditor extends JPanel {
         constraints.weightx = 0.0;
         constraints.weighty = 0.0;
 
-        add(testButton, constraints);
+        panel.add(testButton, constraints);
 
         constraints.gridy = 1;
         constraints.weighty = 10.0;
 
-        add(new ListScrollPane(testList), constraints);
+        panel.add(new ListScrollPane(testList), constraints);
+        return panel;
     }
+
+
+    /**
+     * Compare the configuration values against those in the configuration editor.
+     *
+     * This method must return true when the configuration has changed to enable the apply button
+     * on the configuration panel.
+     *
+     * @return true if the configuration has changed
+     */
+    public boolean isModified() {
+        if (configuration.CONFIGURED_FILTERS.size() != filterListModel.size()) {
+            log.debug("size modified");
+            return true;
+        }
+
+        for (int i=0; i<filterListModel.size(); i++) {
+            XFilesFilterConfiguration externalizable = (XFilesFilterConfiguration) configuration.CONFIGURED_FILTERS.get(i);
+            ConfigurableFilterModel configurable = (ConfigurableFilterModel) filterListModel.get(i);
+            if (!equals(externalizable, configurable)) {
+                log.debug("configuration " + externalizable.NAME + " modified");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Apply (store) values to the saved configuration.
+     */
+    public void apply() {
+        configuration.CONFIGURED_FILTERS = new ArrayList();
+
+        for (int i=0; i<filterListModel.size(); i++) {
+            ConfigurableFilterModel configurable = (ConfigurableFilterModel) filterListModel.get(i);
+            XFilesFilterConfiguration externalizable = new XFilesFilterConfiguration();
+            configurable.apply(externalizable);
+            configuration.CONFIGURED_FILTERS.add(externalizable);
+        }
+
+        // TODO: sort out this (and other) bidirectional dependency
+        configuration.getListener().configurePopupActionGroup();
+    }
+
+    /**
+     * Reset (load) values from those in the saved configuration.
+     */
+    public void reset() {
+        XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
+
+        counts = new CountingFilterListener();
+        filter.setListener(counts);
+
+        XFilesContentIterator content = new XFilesContentIterator(project);
+        content.setFilter(filter);
+        content.iterate();
+
+        log.debug("reset: " + content + counts);
+
+        counts.log();
+
+        filterListModel.clear();
+
+        for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
+            XFilesFilterConfiguration filterConfig = (XFilesFilterConfiguration) iterator.next();
+
+            ConfigurableFilterModel filterModel = new ConfigurableFilterModel(counts);
+            filterModel.reset(filterConfig);
+
+            filterListModel.addElement(filterModel);
+        }
+
+        // select the first filter...
+        // TODO: make sure that there is at least one filter
+        // TODO: initially select the currently active filter?
+        // could use the selected name from the configuration
+
+        if (!filterListModel.isEmpty())
+            filterList.setSelectedIndex(0);
+    }
+
+    public void disposeUIResources() {
+        panel = null;
+    }
+
+    ////////////////////////////////
+
+
+    // ProjectComponent methods
+
+    public String getComponentName() {
+        return "XFilesConfigurable";
+    }
+
+    public void initComponent() {
+    }
+
+    public void disposeComponent() {
+    }
+
+    public void projectOpened() {
+        configuration = project.getComponent(XFilesConfiguration.class);
+    }
+
+    public void projectClosed() {
+        configuration = null;
+    }
+
+    ////////////////////////////////
 
     public void addFilter() {
         ConfigurableFilterModel filter = new ConfigurableFilterModel(counts);
@@ -321,83 +477,6 @@ public class XFilesConfigurationEditor extends JPanel {
     // - ExternalizableFilterConfiguration
     // - ConfigurableFilterConfiguration
     // both extending FilterConfiguration which implements .equals()
-
-    public boolean isModified(XFilesConfiguration configuration) {
-        if (configuration.CONFIGURED_FILTERS.size() != filterListModel.size()) {
-            log.debug("size modified");
-            return true;
-        }
-
-        for (int i=0; i<filterListModel.size(); i++) {
-            XFilesFilterConfiguration externalizable = (XFilesFilterConfiguration) configuration.CONFIGURED_FILTERS.get(i);
-            ConfigurableFilterModel configurable = (ConfigurableFilterModel) filterListModel.get(i);
-            if (!equals(externalizable, configurable)) {
-                log.debug("configuration " + externalizable.NAME + " modified");
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Apply the current values in this editor to the specified configuration.
-     *
-     * @param configuration
-     */
-    public void apply(XFilesConfiguration configuration) {
-        configuration.CONFIGURED_FILTERS = new ArrayList();
-
-        for (int i=0; i<filterListModel.size(); i++) {
-            ConfigurableFilterModel configurable = (ConfigurableFilterModel) filterListModel.get(i);
-            XFilesFilterConfiguration externalizable = new XFilesFilterConfiguration();
-            configurable.apply(externalizable);
-            configuration.CONFIGURED_FILTERS.add(externalizable);
-        }
-
-        // TODO: sort out this (and other) bidirectional dependency
-        configuration.getListener().configurePopupActionGroup();
-    }
-
-    /**
-     * Reset the current values in this editor from the specified configuration.
-     *     basically,
-     * @param configuration
-     */
-    public void reset(XFilesConfiguration configuration) {
-
-        XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
-
-        counts = new CountingFilterListener();
-        filter.setListener(counts);
-
-        XFilesContentIterator content = new XFilesContentIterator(project);
-        content.setFilter(filter);
-        content.iterate();
-
-        log.debug("reset: " + content + counts);
-
-        counts.log();
-
-        filterListModel.clear();
-
-        for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
-            XFilesFilterConfiguration filterConfig = (XFilesFilterConfiguration) iterator.next();
-
-            ConfigurableFilterModel filterModel = new ConfigurableFilterModel(counts);
-            filterModel.reset(filterConfig);
-
-            filterListModel.addElement(filterModel);
-        }
-
-        // select the first filter...
-        // TODO: make sure that there is at least one filter
-        // TODO: initially select the currently active filter?
-        // could use the selected name from the configuration
-
-        if (!filterListModel.isEmpty())
-            filterList.setSelectedIndex(0);
-    }
 
     private class ConfigurationItem implements Comparable {
         private Boolean included;

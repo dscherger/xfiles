@@ -36,9 +36,9 @@ public class EditConfigurationsAction extends AnAction {
     public void actionPerformed(AnActionEvent event) {
         DataContext context = event.getDataContext();
         Project project = (Project) context.getData(DataConstants.PROJECT);
-        XFiles xfiles = (XFiles) project.getComponent(XFiles.class);
+        XFilesConfigurable configurable = (XFilesConfigurable) project.getComponent(XFilesConfigurable.class);
 
         ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-        util.editConfigurable(project, xfiles);
+        util.editConfigurable(project, configurable);
     }
 }
