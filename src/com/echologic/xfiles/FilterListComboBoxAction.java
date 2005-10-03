@@ -143,7 +143,7 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         XFilesVirtualFileFilter selected = filters[configuration.SELECTED_FILTER];
         refreshAction.setFilter(selected);
 
-        presentation.setText(configuration.getSelectedFilter().NAME);
+        if (presentation != null) presentation.setText(selected.getName());
     }
 
 }

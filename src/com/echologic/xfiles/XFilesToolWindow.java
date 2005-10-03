@@ -49,7 +49,7 @@ public class XFilesToolWindow extends JPanel {
     public XFilesToolWindow(Project project) {
         super(new BorderLayout());
 
-        XFilesConfiguration configuration = project.getComponent(XFilesConfiguration.class);
+        XFilesConfiguration configuration = (XFilesConfiguration) project.getComponent(XFilesConfiguration.class);
 
         scrollToSource.setSelected(configuration.SCROLL_TO_SOURCE);
         scrollFromSource.setSelected(configuration.SCROLL_FROM_SOURCE);

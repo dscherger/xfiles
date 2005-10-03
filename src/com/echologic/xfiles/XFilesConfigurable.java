@@ -385,7 +385,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
     }
 
     public void projectOpened() {
-        configuration = project.getComponent(XFilesConfiguration.class);
+        configuration = (XFilesConfiguration) project.getComponent(XFilesConfiguration.class);
     }
 
     public void projectClosed() {
@@ -486,7 +486,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         public ConfigurationItem(boolean included, String text, int count) {
             this.included = Boolean.valueOf(included);
             this.text = text;
-            this.count = Integer.valueOf(count);
+            this.count = new Integer(count);
         }
 
         public int compareTo(Object o) {
