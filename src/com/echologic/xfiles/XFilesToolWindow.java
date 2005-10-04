@@ -85,6 +85,8 @@ public class XFilesToolWindow extends JPanel {
             // TODO: factor out this listener
 
             private void addAndScroll(VirtualFile file) {
+                log.debug("addAndScroll " + file);
+                
                 if (!model.contains(file) && refresh.getFilter().accept(file)) {
                     model.addElement(file);
                     log.debug("added " + file);
@@ -95,7 +97,6 @@ public class XFilesToolWindow extends JPanel {
                     list.setSelectedIndex(index);
                     list.ensureIndexIsVisible(index);
                     log.debug("selected " + file);
-
                 }
             }
 
@@ -201,9 +202,9 @@ public class XFilesToolWindow extends JPanel {
                     if (selected == -1) return;
                     VirtualFile file = (VirtualFile) model.getElementAt(selected);
 
-                    if (scrollToSource.isSelected(null)) {
+                    if (scrollToSource.isSelected(null) && !editor.isFileOpen(file)) {
+                        log.debug("open selected " + file);
                         editor.openFile(file, false);
-                        log.debug("selected " + file);
                     }
                 }
             }

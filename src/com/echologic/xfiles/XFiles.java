@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * Configurable ProjectComponent classes appear under Project Settings in the settings panel.
@@ -21,6 +22,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 public class XFiles implements ProjectComponent {
 
     public static final String TOOL_WINDOW_ID = "XFiles";
+
+    private Logger log = Logger.getInstance(getClass().getName());
 
     private Project project;
 
@@ -35,9 +38,11 @@ public class XFiles implements ProjectComponent {
     }
 
     public void initComponent() {
+        log.debug("initComponent");
     }
 
     public void disposeComponent() {
+        log.debug("disposeComponent");
     }
 
     public void projectOpened() {
