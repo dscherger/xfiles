@@ -5,6 +5,8 @@
  */
 package com.echologic.xfiles;
 
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.FocusEvent;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -20,6 +23,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -28,6 +32,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -58,13 +63,13 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
     private DefaultListModel testListModel;
     private JList testList;
 
-    private JTextField filterNameField;
+    private JTextField nameField;
+    private PathTable pathTable;
+    private ConfigurationTable attributeTable;
     private ConfigurationTable statusTable;
     private ConfigurationTable typeTable;
     private ConfigurationTable vcsTable;
     private ConfigurationTable moduleTable;
-    //private ConfigurationTable globTable;
-    private ConfigurationTable otherTable;
 
     private CountingFilterListener counts;
 
@@ -74,6 +79,11 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
     private CommandAction copy = new CommandAction("Copy", "Copy Filter", XFilesIcons.COPY_ICON);
     private CommandAction moveUp = new CommandAction("Move Up", "Move Filter Up", XFilesIcons.UP_ICON);
     private CommandAction moveDown = new CommandAction("Move Down", "Move Filter Down", XFilesIcons.DOWN_ICON);
+
+    private ActionToolbar pathActions;
+    private CommandAction addPattern = new CommandAction("Add", "Add Pattern", XFilesIcons.ADD_ICON);
+    private CommandAction removePattern = new CommandAction("Remove", "Remove Pattern", XFilesIcons.REMOVE_ICON);
+
 
     private Command addCommand = new Command() {
         public void execute() {
@@ -105,6 +115,18 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         }
     };
 
+    private Command addPatternCommand = new Command() {
+        public void execute() {
+            addPattern();
+        }
+    };
+
+    private Command removePatternCommand = new Command() {
+        public void execute() {
+            removePattern();
+        }
+    };
+
     private ListSelectionListener selectionListener = new ListSelectionListener() {
 
         public void valueChanged(ListSelectionEvent e) {
@@ -122,14 +144,14 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
                 if (selected >= first) {
                     ConfigurableFilterModel model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
 
-                    filterNameField.setText(model.name);
+                    nameField.setText(model.name);
 
+                    pathTable.setModel(model.pathModel);
+                    attributeTable.setModel(model.attributeModel);
                     statusTable.setModel(model.statusModel);
                     typeTable.setModel(model.typeModel);
                     vcsTable.setModel(model.vcsModel);
                     moduleTable.setModel(model.moduleModel);
-                    //globTable.setModel(model.globModel);
-                    otherTable.setModel(model.otherModel);
                 }
             }
         }
@@ -144,7 +166,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
             if (selected >= 0) {
                 ConfigurableFilterModel model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
-                model.name = filterNameField.getText();
+                model.name = nameField.getText();
             }
         }
 
@@ -163,6 +185,12 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         moveUp.setCommand(moveUpCommand);
         moveDown.setCommand(moveDownCommand);
 
+        addPattern.setEnabled(true);
+        removePattern.setEnabled(true);
+        
+        addPattern.setCommand(addPatternCommand);
+        removePattern.setCommand(removePatternCommand);
+
         DefaultActionGroup group = new DefaultActionGroup("xfiles configuration group", false);
         group.add(add);
         group.add(remove);
@@ -171,6 +199,12 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         group.add(moveDown);
 
         actions = actionManager.createActionToolbar("XFilesConfigurationToolbar", group, true);
+
+        DefaultActionGroup patternGroup = new DefaultActionGroup();
+        patternGroup.add(addPattern);
+        patternGroup.add(removePattern);
+
+        pathActions = actionManager.createActionToolbar("XFilesPatternToolbar", patternGroup, false);
     }
 
     // Configurable methods
@@ -204,20 +238,19 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         testListModel = new DefaultListModel();
         testList = new JList(testListModel);
 
-
-        filterNameField = new JTextField();
+        pathTable = new PathTable();
+        attributeTable = new ConfigurationTable();
+        nameField = new JTextField();
         statusTable = new ConfigurationTable();
         typeTable = new ConfigurationTable();
         vcsTable = new ConfigurationTable();
         moduleTable = new ConfigurationTable();
-        //globTable = new ConfigurationTable();
-        otherTable = new ConfigurationTable();
 
         ListSelectionModel selection = filterList.getSelectionModel();
         selection.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         selection.addListSelectionListener(selectionListener);
 
-        filterNameField.addFocusListener(nameListener);
+        nameField.addFocusListener(nameListener);
 
         ///////////////////////////
 
@@ -233,34 +266,67 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         constraints.gridy = 1;
         constraints.weighty = 10.0;
+        constraints.gridheight = 2;
 
         panel.add(new ListScrollPane(filterList), constraints);
 
         ///////////////////////////
 
-        JLabel filterNameLabel = new JLabel("Filter Name:");
+        JLabel nameLabel = new JLabel("Name:");
 
         constraints.gridx = 1;
         constraints.gridy = 0;
         constraints.weightx = 0.0;
         constraints.weighty = 0.0;
+        constraints.gridheight = 1;
 
-        panel.add(filterNameLabel, constraints);
+        panel.add(nameLabel, constraints);
 
         constraints.gridx = 2;
         constraints.weightx = 10.0;
 
-        panel.add(filterNameField, constraints);
+        panel.add(nameField, constraints);
 
-        JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
+        JLabel matchLabel = new JLabel("Match:");
+
+        constraints.gridx = 1;
+        constraints.gridy = 1;
+        constraints.weightx = 0.0;
+        constraints.weighty = 0.0;
+
+        panel.add(matchLabel, constraints);
+
+        constraints.gridx = 2;
+        constraints.weightx = 10.0;
+
+        JRadioButton matchAll = new JRadioButton("selections on all tabs");
+        JRadioButton matchAny = new JRadioButton("selections on any tab");
+
+        ButtonGroup matchButtons = new ButtonGroup();
+        matchButtons.add(matchAll);
+        matchButtons.add(matchAny);
+
+        FlowLayout layout = new FlowLayout(FlowLayout.LEADING);
+        JPanel buttonPanel = new JPanel(layout);
+        buttonPanel.add(matchAll);
+        buttonPanel.add(matchAny);
+
+        panel.add(buttonPanel, constraints);
+
+        JPanel pathPanel = new JPanel();
+        pathPanel.setLayout(new BorderLayout());
+        pathPanel.add(pathActions.getComponent(), BorderLayout.WEST);
+        pathPanel.add(new TableScrollPane(pathTable), BorderLayout.CENTER);
+
+        final JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabs.add("path", pathPanel);
+        tabs.add("attribute", new TableScrollPane(attributeTable));
         tabs.add("status", new TableScrollPane(statusTable));
         tabs.add("type", new TableScrollPane(typeTable));
         tabs.add("vcs", new TableScrollPane(vcsTable));
         tabs.add("module", new TableScrollPane(moduleTable));
-        //tabs.add("glob", new TableScrollPane(globTable));
-        tabs.add("other", new TableScrollPane(otherTable));
 
-        constraints.gridy = 1;
+        constraints.gridy = 2;
         constraints.weightx = 10.0;
         constraints.weighty = 10.0;
 
@@ -279,6 +345,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         constraints.gridy = 1;
         constraints.weighty = 10.0;
+        constraints.gridheight = 2;
 
         panel.add(new ListScrollPane(testList), constraints);
         return panel;
@@ -356,16 +423,14 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
             filterListModel.addElement(filterModel);
         }
 
-        // select the first filter...
-        // TODO: make sure that there is at least one filter
         // TODO: initially select the currently active filter?
-        // could use the selected name from the configuration
 
         if (!filterListModel.isEmpty())
             filterList.setSelectedIndex(0);
     }
 
     public void disposeUIResources() {
+        // TODO: release all resources
         panel = null;
     }
 
@@ -394,7 +459,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
     ////////////////////////////////
 
-    public void addFilter() {
+    private void addFilter() {
         ConfigurableFilterModel filter = new ConfigurableFilterModel(counts);
         filter.name = "<unnamed>";
         int index = filterList.getSelectedIndex()+1;
@@ -402,7 +467,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         filterList.setSelectedIndex(index);
     }
 
-    public void removeFilter() {
+    private void removeFilter() {
         int index = filterList.getSelectedIndex();
         if (index >= 0) {
             filterListModel.removeElementAt(index);
@@ -419,7 +484,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         }
     }
 
-    public void copyFilter() {
+    private void copyFilter() {
         int index = filterList.getSelectedIndex();
         if (index >= 0) {
             ConfigurableFilterModel filter = (ConfigurableFilterModel) filterListModel.getElementAt(index);
@@ -440,15 +505,34 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         filterList.setSelectedIndex(index2);
     }
 
-    public void moveFilterUp() {
+    private void moveFilterUp() {
         int index = filterList.getSelectedIndex();
         swap(index, index - 1);
     }
 
-    public void moveFilterDown() {
+    private void moveFilterDown() {
         int index = filterList.getSelectedIndex();
         swap(index, index + 1);
     }
+
+    ////////////////////////////////
+
+    private void addPattern() {
+        DefaultTableModel model = (DefaultTableModel) pathTable.getModel();
+        int row = pathTable.getSelectedRow()+1;
+        model.insertRow(row, (String[]) null);
+        pathTable.getSelectionModel().setSelectionInterval(row, row);
+    }
+
+    private void removePattern() {
+        DefaultTableModel model = (DefaultTableModel) pathTable.getModel();
+        int row = pathTable.getSelectedRow();
+        if (row >= 0) model.removeRow(row);
+        if (row >= model.getRowCount()) row = model.getRowCount() - 1;
+        if (row >= 0) pathTable.getSelectionModel().setSelectionInterval(row, row);
+    }
+
+    ////////////////////////////////
 
     private boolean equals(String name, Object a, Object b) {
         if (a.equals(b)) return true;
@@ -461,12 +545,12 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
     private boolean equals(XFilesFilterConfiguration externalizable, ConfigurableFilterModel configurable) {
         if (!equals("name", externalizable.NAME, configurable.name)) return false;
 
+        if (!equals("path", externalizable.ACCEPTED_PATH_NAMES, configurable.pathModel.getSelectedItems())) return false;
+        if (!equals("attribute", externalizable.ACCEPTED_ATTRIBUTE_NAMES, configurable.attributeModel.getSelectedItems())) return false;
         if (!equals("status", externalizable.ACCEPTED_STATUS_NAMES,  configurable.statusModel.getSelectedItems())) return false;
         if (!equals("type", externalizable.ACCEPTED_TYPE_NAMES, configurable.typeModel.getSelectedItems())) return false;
         if (!equals("vcs", externalizable.ACCEPTED_VCS_NAMES, configurable.vcsModel.getSelectedItems())) return false;
         if (!equals("module", externalizable.ACCEPTED_MODULE_NAMES, configurable.moduleModel.getSelectedItems())) return false;
-        // (!equals("glob", externalizable.ACCEPTED_GLOB_NAMES, configurable.globModel.getSelectedItems())) return false;
-        if (!equals("other", externalizable.ACCEPTED_OTHERS, configurable.otherModel.getSelectedItems())) return false;
 
         // TODO: it would be helpful to have a list of the various lists
 
@@ -547,6 +631,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
             }
         }
 
+        // TODO: set column widths more appropriately
+
         public Class getColumnClass(int column) {
             switch (column) {
                 case 0: return Boolean.class;
@@ -598,7 +684,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
          *
          * Alternatively we could hold items in a map keyed by name with selected/count values.
          * This would allow for iterating over the selected list and simply checking the map
-         * for existing values. 
+         * for existing values.
          *
          * @param selected
          */
@@ -623,13 +709,89 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
             Collections.sort(items);
         }
+    }
 
+    private class PathTableModel extends DefaultTableModel {
+
+        private String name;
+
+        public PathTableModel() {
+            super(0, 1);
+        }
+
+        public PathTableModel(PathTableModel that) {
+            this();
+            this.name = that.name;
+            this.dataVector = that.dataVector;
+            this.columnIdentifiers = that.columnIdentifiers;
+        }
+
+        /**
+         * specify the name of items in this model
+         * i.e. vcs, status, type, etc.
+         *
+         * @param map
+         */
+        public PathTableModel(VirtualFileCounterMap map) {
+            this.name = map.getName();
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getColumnCount() {
+            return 1;
+        }
+
+        public String getColumnName(int column) {
+            return "path glob";
+        }
+
+        public Class getColumnClass(int column) {
+            return String.class;
+        }
+
+        /**
+         * Get the non-empty patterns from the path table.
+         * TODO: the patterns should be compiled and validated as they are entered
+         * and invalid patterns should be disallowed somehow
+         */
+        public List getSelectedItems() {
+            int size = getRowCount();
+            List selected = new ArrayList(size);
+            for (int i=0; i<size; i++) {
+                String item = (String) getValueAt(i, 0);
+                if (item != null) {
+                    item = item.trim();
+                    if (item.length() > 0) selected.add(item);
+                }
+            }
+            return selected;
+        }
+
+        public void setSelectedItems(List selected) {
+            int size = selected.size();
+            setRowCount(size);
+            for (int i=0; i<size; i++) {
+                setValueAt(selected.get(i), i, 0);
+            }
+        }
     }
 
     private class ConfigurationTable extends JTable {
         public ConfigurationTable() {
             super(new ConfigurationTableModel());
             setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
+            getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        }
+    }
+
+    private class PathTable extends JTable {
+        public PathTable() {
+            super(new PathTableModel());
+            setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
+            getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         }
     }
 
@@ -653,12 +815,12 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         private String name;
 
         // TODO: we may want to hold these in an array
+        private PathTableModel pathModel;
+        private ConfigurationTableModel attributeModel;
         private ConfigurationTableModel statusModel;
         private ConfigurationTableModel typeModel;
         private ConfigurationTableModel vcsModel;
         private ConfigurationTableModel moduleModel;
-        //private ConfigurationTableModel globModel;
-        private ConfigurationTableModel otherModel;
 
         /**
          * Copy constructor
@@ -667,31 +829,31 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
          */
         public ConfigurableFilterModel(ConfigurableFilterModel that) {
             this.name = that.name;
+            this.pathModel = new PathTableModel(that.pathModel);
+            this.attributeModel = new ConfigurationTableModel(that.attributeModel);
             this.statusModel = new ConfigurationTableModel(that.statusModel);
             this.typeModel = new ConfigurationTableModel(that.typeModel);
             this.vcsModel = new ConfigurationTableModel(that.vcsModel);
             this.moduleModel = new ConfigurationTableModel(that.moduleModel);
-            //this.globModel = new ConfigurationTableModel(that.globModel);
-            this.otherModel = new ConfigurationTableModel(that.otherModel);
         }
 
         public ConfigurableFilterModel(CountingFilterListener listener) {
+            pathModel = new PathTableModel(listener.getPathMap());
+            attributeModel = new ConfigurationTableModel(listener.getAttributeMap());
             statusModel = new ConfigurationTableModel(listener.getStatusMap());
             typeModel = new ConfigurationTableModel(listener.getTypeMap());
             vcsModel = new ConfigurationTableModel(listener.getVcsMap());
             moduleModel = new ConfigurationTableModel(listener.getModuleMap());
-            //globModel = new ConfigurationTableModel(listener.getGlobMap());
-            otherModel = new ConfigurationTableModel(listener.getOtherMap());
         }
 
         public void reset(XFilesFilterConfiguration configuration) {
             name = configuration.NAME;
+            pathModel.setSelectedItems(configuration.ACCEPTED_PATH_NAMES);
+            attributeModel.setSelectedItems(configuration.ACCEPTED_ATTRIBUTE_NAMES);
             statusModel.setSelectedItems(configuration.ACCEPTED_STATUS_NAMES);
             typeModel.setSelectedItems(configuration.ACCEPTED_TYPE_NAMES);
             vcsModel.setSelectedItems(configuration.ACCEPTED_VCS_NAMES);
             moduleModel.setSelectedItems(configuration.ACCEPTED_MODULE_NAMES);
-            //globModel.setSelectedItems(configuration.ACCEPTED_NAME_GLOBS);
-            otherModel.setSelectedItems(configuration.ACCEPTED_OTHERS);
         }
 
         public void apply(XFilesFilterConfiguration configuration) {
@@ -699,19 +861,19 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
             configuration.log();
             configuration.NAME = name;
 
+            configuration.ACCEPTED_PATH_NAMES.clear();
+            configuration.ACCEPTED_ATTRIBUTE_NAMES.clear();
             configuration.ACCEPTED_STATUS_NAMES.clear();
             configuration.ACCEPTED_TYPE_NAMES.clear();
             configuration.ACCEPTED_VCS_NAMES.clear();
             configuration.ACCEPTED_MODULE_NAMES.clear();
-            configuration.ACCEPTED_NAME_GLOBS.clear();
-            configuration.ACCEPTED_OTHERS.clear();
 
+            configuration.ACCEPTED_PATH_NAMES.addAll(pathModel.getSelectedItems());
+            configuration.ACCEPTED_ATTRIBUTE_NAMES.addAll(attributeModel.getSelectedItems());
             configuration.ACCEPTED_STATUS_NAMES.addAll(statusModel.getSelectedItems());
             configuration.ACCEPTED_TYPE_NAMES.addAll(typeModel.getSelectedItems());
             configuration.ACCEPTED_VCS_NAMES.addAll(vcsModel.getSelectedItems());
             configuration.ACCEPTED_MODULE_NAMES.addAll(moduleModel.getSelectedItems());
-            //configuration.ACCEPTED_NAME_GLOBS.addAll(globModel.getSelectedItems());
-            configuration.ACCEPTED_OTHERS.addAll(otherModel.getSelectedItems());
             configuration.log();
         }
 

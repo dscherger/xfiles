@@ -5,6 +5,8 @@
  */
 package com.echologic.xfiles;
 
+import java.util.Iterator;
+
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -12,12 +14,20 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class CountingFilterListener implements FilterListener {
 
+    private VirtualFileCounterMap pathMap = new VirtualFileCounterMap("path pattern");
+    private VirtualFileCounterMap attributeMap = new VirtualFileCounterMap("file attribute");
     private VirtualFileCounterMap statusMap = new VirtualFileCounterMap("file status");
     private VirtualFileCounterMap typeMap = new VirtualFileCounterMap("file type");
     private VirtualFileCounterMap vcsMap = new VirtualFileCounterMap("version control system");
     private VirtualFileCounterMap moduleMap = new VirtualFileCounterMap("module");
-    //private VirtualFileCounterMap matchMap = new VirtualFileCounterMap("matched pattern");
-    private VirtualFileCounterMap otherMap = new VirtualFileCounterMap("miscellaneous");
+
+    public VirtualFileCounterMap getPathMap() {
+        return pathMap;
+    }
+
+    public VirtualFileCounterMap getAttributeMap() {
+        return attributeMap;
+    }
 
     public VirtualFileCounterMap getStatusMap() {
         return statusMap;
@@ -35,14 +45,12 @@ public class CountingFilterListener implements FilterListener {
         return moduleMap;
     }
 
-    /*
-    public VirtualFileCounterMap getMatchMap() {
-        return matchMap;
+    public void path(String pattern, VirtualFile file) {
+        pathMap.count(pattern, file);
     }
-    */
 
-    public VirtualFileCounterMap getOtherMap() {
-        return otherMap;
+    public void attribute(String type, VirtualFile file) {
+        attributeMap.count(type, file);
     }
 
     public void status(String statusText, VirtualFile file) {
@@ -61,33 +69,23 @@ public class CountingFilterListener implements FilterListener {
         moduleMap.count(moduleName, file);
     }
 
-    /*
-    public void match(String pattern, VirtualFile file) {
-        matchMap.count(pattern, file);
-    }
-    */
-
-    public void other(String type, VirtualFile file) {
-        otherMap.count(type, file);
-    }
-
-    // TODO: this indicates the other constants should live here or in FilterListener
-
     public String toString() {
-        return
-            otherMap.getCount(XFilesVirtualFileFilter.IGNORED) + " ignored; " +
-            otherMap.getCount(XFilesVirtualFileFilter.SOURCE) + " sources; " +
-            otherMap.getCount(XFilesVirtualFileFilter.TEST) + " tests; " +
-            otherMap.getCount(XFilesVirtualFileFilter.OPEN) + " open; ";
+        StringBuffer buffer = new StringBuffer();
+        for (Iterator iterator = attributeMap.getCounters().iterator(); iterator.hasNext(); ) {
+            VirtualFileCounter counter = (VirtualFileCounter) iterator.next();
+            buffer.append(counter.getCount()).append(" ");
+            buffer.append(counter.getName()).append("; ");
+        }
+        return buffer.toString();
     }
 
     public void log() {
+        pathMap.log();
+        attributeMap.log();
         statusMap.log();
         typeMap.log();
         vcsMap.log();
         moduleMap.log();
-        //matchMap.log();
-        otherMap.log();
     }
 
 }

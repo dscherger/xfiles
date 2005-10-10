@@ -6,12 +6,11 @@
 package com.echologic.xfiles;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Collections;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -34,30 +33,23 @@ import org.apache.oro.text.regex.Perl5Matcher;
  */
 public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
-    // TODO: are these better in FilterListener?!?
-    // hmm... it seems not, the listener simply has a generic other category
-    // which can be used by clients for anything they like
-
-    public static final String IGNORED = "ignored";
-    public static final String SOURCE= "source";
-    public static final String TEST = "test";
-    public static final String OPEN = "open";
-
     private Logger log = Logger.getInstance(getClass().getName());
+
+    private ProjectLevelVcsManager vcsManager;
+    private ProjectFileIndex moduleManager;
+    private FileStatusManager statusManager;
+    private FileAttributeManager attributeManager;
 
     private String name;
 
-    private ProjectLevelVcsManager vcsManager;
-    private ProjectFileIndex fileIndex;
-    private FileStatusManager statusManager;
-    private FileEditorManager editorManager;
+    private boolean matchAll;
 
+    private List acceptedPathNames = Collections.EMPTY_LIST;
+    private List acceptedAttributeNames = Collections.EMPTY_LIST;
     private List acceptedStatusNames = Collections.EMPTY_LIST;
     private List acceptedTypeNames = Collections.EMPTY_LIST;
     private List acceptedVcsNames = Collections.EMPTY_LIST;
     private List acceptedModuleNames = Collections.EMPTY_LIST;
-    private List acceptedNameGlobs = Collections.EMPTY_LIST;
-    private List acceptedOthers = Collections.EMPTY_LIST;
 
     private GlobCompiler compiler = new GlobCompiler();
     private Perl5Matcher matcher = new Perl5Matcher();
@@ -66,32 +58,48 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
     public XFilesVirtualFileFilter(Project project) {
         vcsManager = ProjectLevelVcsManager.getInstance(project);
-
         statusManager = FileStatusManager.getInstance(project);
-        editorManager = FileEditorManager.getInstance(project);
+        attributeManager = new FileAttributeManager(project); // TODO: getInstance
 
         ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-        fileIndex = rootManager.getFileIndex();
+        moduleManager = rootManager.getFileIndex();
     }
 
     public void setConfiguration(XFilesFilterConfiguration configuration) {
         name = configuration.NAME;
+        matchAll = configuration.MATCH_ALL;
 
+        // TODO: it might be good to use a class that holds an array and matches against it for these
+
+        acceptedPathNames = compileAcceptedNameGlobs(configuration.ACCEPTED_PATH_NAMES);
+        acceptedAttributeNames = configuration.ACCEPTED_ATTRIBUTE_NAMES;
         acceptedStatusNames = configuration.ACCEPTED_STATUS_NAMES;
         acceptedTypeNames = configuration.ACCEPTED_TYPE_NAMES;
         acceptedVcsNames = configuration.ACCEPTED_VCS_NAMES;
         acceptedModuleNames = configuration.ACCEPTED_MODULE_NAMES;
-        acceptedNameGlobs = compileAcceptedNameGlobs(configuration.ACCEPTED_NAME_GLOBS);
-        acceptedOthers = configuration.ACCEPTED_OTHERS;
     }
 
     public void logConfiguration() {
+        log.debug("configuration " + name);
+        log.debug("match " + (matchAll ? "all" : "any"));
+        log.debug("path " + getPatternStrings(acceptedPathNames));
+        log.debug("attribute " + acceptedAttributeNames);
         log.debug("status " + acceptedStatusNames);
         log.debug("type " + acceptedTypeNames);
         log.debug("vcs " + acceptedVcsNames);
         log.debug("module " + acceptedModuleNames);
-        //log.debug("glob " + acceptedNameGlobs);
-        log.debug("other " + acceptedOthers);
+    }
+
+    private String getPatternStrings(List patterns) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("[");
+        for (int i=0; i<patterns.size(); i++) {
+            if (i > 0) buffer.append(", ");
+            Pattern pattern = (Pattern) patterns.get(i);
+            buffer.append(pattern.getPattern());
+        }
+        buffer.append("[");
+        return buffer.toString();
     }
 
     public String getName() {
@@ -125,95 +133,89 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
         if (file.isDirectory()) return false;
 
-        Acceptor acceptor = new AnyAcceptor();
+        Condition condition;
+
+        if (matchAll) {
+            condition = new AndCondition();
+        } else {
+            condition = new OrCondition();
+        }
 
         FileStatus status = statusManager.getStatus(file);
         String statusText = status.getText();
-        acceptor.update(acceptedStatusNames.contains(statusText));
+        condition.evaluate(acceptedStatusNames.contains(statusText));
         listener.status(statusText, file);
 
         FileType type = file.getFileType();
         String typeDescription = type.getDescription();
-        acceptor.update(acceptedTypeNames.contains(typeDescription));
+        condition.evaluate(acceptedTypeNames.contains(typeDescription));
         listener.type(typeDescription, file);
 
         AbstractVcs vcs = vcsManager.getVcsFor(file);
         String vcsName = "<None>";
         if (vcs != null) vcsName = vcs.getName();
-        acceptor.update(acceptedVcsNames.contains(vcsName));
+        condition.evaluate(acceptedVcsNames.contains(vcsName));
         listener.vcs(vcsName, file);
 
-        Module module = fileIndex.getModuleForFile(file);
+        Module module = moduleManager.getModuleForFile(file);
         String moduleName = "<None>";
         if (module != null) moduleName = module.getName();
-        acceptor.update(acceptedModuleNames.contains(moduleName));
+        condition.evaluate(acceptedModuleNames.contains(moduleName));
         listener.module(moduleName, file);
 
-        if (fileIndex.isIgnored(file)) {
-            acceptor.update(acceptedOthers.contains(IGNORED));
-            listener.other(IGNORED, file);
-        }
-
-        // note that SourceContent is a superset TestSourceContent
-
-        if (fileIndex.isInTestSourceContent(file)) {
-            acceptor.update(acceptedOthers.contains(TEST));
-            listener.other(TEST, file);
-        } else if (fileIndex.isInSourceContent(file)) {
-            acceptor.update(acceptedOthers.contains(SOURCE));
-            listener.other(SOURCE, file);
-        }
-
-        if (editorManager.isFileOpen(file)) {
-            acceptor.update(acceptedOthers.contains(OPEN));
-            listener.other(OPEN, file);
+        String[] attributes = attributeManager.getAttributes(file);
+        for (int i = 0; i < attributes.length; i++) {
+            String attribute = attributes[i];
+            condition.evaluate(acceptedAttributeNames.contains(attribute));
+            listener.attribute(attribute, file);
         }
 
         String path = file.getPath();
-        for (Iterator iterator = acceptedNameGlobs.iterator(); !acceptor.isAccepted() && iterator.hasNext();) {
+        for (Iterator iterator = acceptedPathNames.iterator(); iterator.hasNext();) {
             Pattern pattern = (Pattern) iterator.next();
-            boolean matched = matcher.contains(path, pattern);
-            acceptor.update(matched);
-            /*
-            if (matched) {
-                listener.match(pattern.getPattern(), file);
+            if (matcher.matches(path, pattern)) {
+                condition.evaluate(true);
+                listener.path(pattern.getPattern(), file);
+                log.debug(pattern.getPattern() + " matched path " + path);
+            } else {
+                condition.evaluate(false);
+                log.debug(pattern.getPattern() + " unmatched path " + path);
             }
-            */
         }
 
-        return acceptor.isAccepted();
+        return condition.isTrue();
     }
 
-    private abstract class Acceptor {
+    private abstract class Condition {
 
-        protected boolean accepted;
+        protected boolean value;
 
-        public abstract void update(boolean b);
+        public abstract void evaluate(boolean b);
 
-        public boolean isAccepted() {
-            return accepted;
-        }
-    }
-
-    private class AllAcceptor extends Acceptor {
-
-        public AllAcceptor() {
-            accepted = true;
-        }
-
-        public void update(boolean b) {
-            accepted &= b;
+        public boolean isTrue() {
+            return value;
         }
     }
 
-    private class AnyAcceptor extends Acceptor {
+    private class AndCondition extends Condition {
 
-        public AnyAcceptor() {
-            accepted = false;
+        public AndCondition() {
+            value = true;
         }
 
-        public void update(boolean b) {
-            accepted |= b;
+        public void evaluate(boolean b) {
+            value &= b;
+        }
+    }
+
+    private class OrCondition extends Condition {
+
+        public OrCondition() {
+            value = false;
+        }
+
+        public void evaluate(boolean b) {
+            value |= b;
         }
     }
 

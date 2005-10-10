@@ -1,0 +1,26 @@
+The following issues are known to exist and may or may not be fixed any time soon.
+
+Open, Deleted and Renamed Files
+
+Although the vcs may report a file as deleted it will not generally appear in
+the tool window. The problem is that the filter runs over the list of current
+project files and includes those that match the filter criteria. Deleted files
+no longer exist and will not be tested against the currently selected filter.
+
+File deletion events that occur while the tool window is active should be detected
+and their associated files should be tested against the currently selected
+filter so they may be visible. The same situation exists for renamed files
+as the file no longer exists under the old name. Rename events should be detected
+in the same way and my be visible.
+
+A filter that selects open files will currently include files that are opened
+while the tool window is active regardless of whether the file exists in the
+project or not. For example, "files" from the jdk source jar that are opened
+will be selected by an open filter. However, refreshing the filter will exclude
+these files because they are not listed in the project source roots.
+
+There are a few different ways to solve these problems. One would be to only
+ever list files in the project source roots which would require an initial
+check that any file is in one of the project source roots. Another would be
+to include all project roots such that library sources would always be included.
+(further investigation required)

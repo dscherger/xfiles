@@ -75,14 +75,7 @@ public class RefreshAction extends AnAction {
 
         WindowManager windowManager = WindowManager.getInstance();
         StatusBar statusBar = windowManager.getStatusBar(project);
-        statusBar.setInfo("filter refreshed in " + delta + "ms; " + content + listener);
-
-        // TODO: decide how to do logical combination of selection based on the information above
-        // i.e. if two statuses and two file types are selected for inclusion what is the expected result
-        // clearly, logical or between selections of the same type (file type, file status, etc.)
-        // but logical and/or between selections of different types might both be useful
-        // i.e. these statuses AND those types
-        //   vs these status OR those types
+        statusBar.setInfo(filter.getName() + " filter refreshed in " + delta + "ms; " + content + listener);
 
         FileEditorManager editorManager = FileEditorManager.getInstance(project);
         VirtualFile[] files = editorManager.getSelectedFiles();
