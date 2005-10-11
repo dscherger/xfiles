@@ -34,7 +34,7 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
     public boolean SCROLL_TO_SOURCE;
     public boolean SCROLL_FROM_SOURCE;
 
-    public int SELECTED_FILTER;
+    public String SELECTED_FILTER;
 
     public List CONFIGURED_FILTERS = new ArrayList();
 
@@ -46,10 +46,6 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
 
     public void setListener(FilterListComboBoxAction listener) {
         this.listener = listener;
-    }
-
-    public XFilesFilterConfiguration getSelectedFilter() {
-        return (XFilesFilterConfiguration) CONFIGURED_FILTERS.get(SELECTED_FILTER);
     }
 
     // ProjectComponent methods
@@ -73,7 +69,7 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
 
         SCROLL_TO_SOURCE = JDOMExternalizer.readBoolean(root, SCROLL_TO_SOURCE_NODE);
         SCROLL_FROM_SOURCE = JDOMExternalizer.readBoolean(root, SCROLL_FROM_SOURCE_NODE);
-        SELECTED_FILTER = JDOMExternalizer.readInteger(root, SELECTED_FILTER_NODE, 0);
+        SELECTED_FILTER = JDOMExternalizer.readString(root, SELECTED_FILTER_NODE);
 
         Element list = root.getChild(CONFIGURED_FILTERS_NODE);
         List filters = list.getChildren(FILTER_NODE);

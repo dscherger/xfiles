@@ -38,6 +38,7 @@ public class RefreshAction extends AnAction {
     }
 
     public void setFilter(XFilesVirtualFileFilter filter) {
+        log.debug("refresh filter set to " + filter.getName());
         this.filter = filter;
     }
 

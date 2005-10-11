@@ -103,10 +103,6 @@ public class XFilesToolWindow extends JPanel {
 
             log.debug("selection changed: old file " + oldName + " new file " + newName + " scroll " + scrollFromSource.isSelected(null));
 
-            // TODO: we need to schedule this to run later, after this event has been handled
-            // do we do the standard swing invokeLater(runnable) thing or is there some other
-            // intellij magic way to do this?
-
             if (file != null) addAndScroll(file);
         }
     };
@@ -186,7 +182,6 @@ public class XFilesToolWindow extends JPanel {
                 // handling events which is not allowed
 
                 if (scrollToSource.isSelected(null) && scrolling == 0) {
-                    log.debug("open selected " + file);
                     editor.openFile(file, false);
                 }
             }
@@ -198,12 +193,14 @@ public class XFilesToolWindow extends JPanel {
         super(new BorderLayout());
 
         XFilesConfiguration configuration = (XFilesConfiguration) project.getComponent(XFilesConfiguration.class);
+        XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
+
+        refresh.setFilter(filter);
 
         scrollToSource.setSelected(configuration.SCROLL_TO_SOURCE);
         scrollFromSource.setSelected(configuration.SCROLL_FROM_SOURCE);
 
-        FilterListComboBoxAction selections = new FilterListComboBoxAction(project, refresh);
-        selections.setConfiguration(configuration);
+        FilterListComboBoxAction selections = new FilterListComboBoxAction(project, configuration, refresh);
 
         log.debug("filter list created; selected filter " + refresh.getFilter());
 

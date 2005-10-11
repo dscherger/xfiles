@@ -19,24 +19,21 @@ public class SelectFilterAction extends AnAction {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
-    private String name;
-    private int index;
-    
-    private FilterListComboBoxAction filters;
+    private XFilesVirtualFileFilter filter;
+    private FilterListComboBoxAction list;
 
-    public SelectFilterAction(FilterListComboBoxAction filters, String name, int index) {
-        super(name, "description", XFilesIcons.FILTER_ICON);
-        this.filters = filters;
-        this.name = name;
-        this.index = index;
-    }
-
-    public String getName() {
-        return name;
+    public SelectFilterAction(FilterListComboBoxAction filters, XFilesVirtualFileFilter filter) {
+        super(filter.getName(), filter.getName(), XFilesIcons.FILTER_ICON);
+        this.list = filters;
+        this.filter = filter;
     }
 
     public void actionPerformed(AnActionEvent event) {
-        log.debug("selected filter " + name);
-        filters.setSelected(event, index);
+        log.debug("selected filter " + filter.getName());
+        list.setSelected(event, filter);
+    }
+
+    public XFilesVirtualFileFilter getFilter() {
+        return filter;
     }
 }
