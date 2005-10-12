@@ -31,11 +31,22 @@ public class XFilesFilterConfiguration implements JDOMExternalizable {
     public String NAME;
 
     /**
-     * TODO: this isn't quite correct
-     * there *must* be OR logic between selections of a single type (i.e. if several
-     * version control statuses are selected a logical AND between them would never
-     * match). this setting really controls the AND/OR logic BETWEEN the different
-     * types. i.e. the following file statuses AND/OR the folling file types.
+     * The MATCH_ALL property controls the AND/OR logic of selections between the various
+     * configuration tables.
+     *
+     * When set to "all" (true)  at least one entry from each table must match.
+     * When set to "any" (false) only one entry from any table must match.
+     *
+     * match ALL implies logical AND between the various tables
+     *
+     *      any path AND any attribute AND any status AND any type AND any vcs AND any module
+     *
+     * match ANY implies logical OR between the various tables
+     *
+     *      any path OR any attribute OR any status OR any type OR any vcs OR any module
+     *
+     * i.e. match ALL requires one item on all tabs
+     *  and match ANY requires one item on any tab
      */
     public boolean MATCH_ALL;
 

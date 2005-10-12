@@ -98,7 +98,7 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
             Pattern pattern = (Pattern) patterns.get(i);
             buffer.append(pattern.getPattern());
         }
-        buffer.append("[");
+        buffer.append("]");
         return buffer.toString();
     }
 
@@ -141,34 +141,56 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
             condition = new OrCondition();
         }
 
+        // TODO: AndCondition doesn't quite work with this as it is...
+        // empty lists need to be excluded from condition evaluation or something
+
+        log.debug("match " + file + " starts with " + condition.isTrue());
+
         FileStatus status = statusManager.getStatus(file);
         String statusText = status.getText();
-        condition.evaluate(acceptedStatusNames.contains(statusText));
         listener.status(statusText, file);
+
+        if (!acceptedStatusNames.isEmpty()) {
+            condition.evaluate(acceptedStatusNames.contains(statusText));
+        }
 
         FileType type = file.getFileType();
         String typeDescription = type.getDescription();
-        condition.evaluate(acceptedTypeNames.contains(typeDescription));
         listener.type(typeDescription, file);
+
+        if (!acceptedTypeNames.isEmpty()) {
+            condition.evaluate(acceptedTypeNames.contains(typeDescription));
+        }
 
         AbstractVcs vcs = vcsManager.getVcsFor(file);
         String vcsName = "<None>";
         if (vcs != null) vcsName = vcs.getName();
-        condition.evaluate(acceptedVcsNames.contains(vcsName));
         listener.vcs(vcsName, file);
+
+        if (!acceptedVcsNames.isEmpty()) {
+            condition.evaluate(acceptedVcsNames.contains(vcsName));
+        }
 
         Module module = moduleManager.getModuleForFile(file);
         String moduleName = "<None>";
         if (module != null) moduleName = module.getName();
-        condition.evaluate(acceptedModuleNames.contains(moduleName));
         listener.module(moduleName, file);
+
+        if (!acceptedModuleNames.isEmpty()) {
+            condition.evaluate(acceptedModuleNames.contains(moduleName));
+        }
 
         String[] attributes = attributeManager.getAttributes(file);
         for (int i = 0; i < attributes.length; i++) {
             String attribute = attributes[i];
-            condition.evaluate(acceptedAttributeNames.contains(attribute));
             listener.attribute(attribute, file);
+
+            if (!acceptedAttributeNames.isEmpty()) {
+                condition.evaluate(acceptedAttributeNames.contains(attribute));
+            }
         }
+
+        log.debug("before patterns condition is " + condition.isTrue());
 
         String path = file.getPath();
         for (Iterator iterator = acceptedPathNames.iterator(); iterator.hasNext();) {
@@ -182,6 +204,8 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
                 log.debug(pattern.getPattern() + " unmatched path " + path);
             }
         }
+
+        log.debug("after patterns condition is " + condition.isTrue());
 
         return condition.isTrue();
     }

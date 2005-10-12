@@ -11,6 +11,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -51,6 +53,9 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
+    private static final String MATCH_ALL = "all";
+    private static final String MATCH_ANY = "any";
+
     private Project project;
 
     private XFilesConfiguration configuration;
@@ -70,6 +75,9 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
     private ConfigurationTable typeTable;
     private ConfigurationTable vcsTable;
     private ConfigurationTable moduleTable;
+
+    private JRadioButton matchAll = new JRadioButton("selections on all tabs");
+    private JRadioButton matchAny = new JRadioButton("selections on any tab");
 
     private CountingFilterListener counts;
 
@@ -145,6 +153,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
                     ConfigurableFilterModel model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
 
                     nameField.setText(model.name);
+                    matchAll.setSelected(model.matchAll);
+                    matchAny.setSelected(!model.matchAll);
 
                     pathTable.setModel(model.pathModel);
                     attributeTable.setModel(model.attributeModel);
@@ -172,9 +182,29 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
     };
 
+    private ActionListener matchButtonListener = new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+            ConfigurableFilterModel model = null;
+
+            int selected = filterList.getSelectedIndex();
+
+            if (selected >= 0) {
+                model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
+                if (e.getActionCommand().equals(MATCH_ALL)) {
+                    model.matchAll = true;
+                } else {
+                    model.matchAll = false;
+                }
+            }
+
+        }
+    };
 
     public XFilesConfigurable(Project project) {
         this.project = project;
+
+        matchAll.setActionCommand(MATCH_ALL);
+        matchAny.setActionCommand(MATCH_ANY);
 
         ActionManager actionManager = ActionManager.getInstance();
 
@@ -252,6 +282,9 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         nameField.addFocusListener(nameListener);
 
+        matchAll.addActionListener(matchButtonListener);
+        matchAny.addActionListener(matchButtonListener);
+
         ///////////////////////////
 
         constraints.gridx = 0;
@@ -298,9 +331,6 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         constraints.gridx = 2;
         constraints.weightx = 10.0;
-
-        JRadioButton matchAll = new JRadioButton("selections on all tabs");
-        JRadioButton matchAny = new JRadioButton("selections on any tab");
 
         ButtonGroup matchButtons = new ButtonGroup();
         matchButtons.add(matchAll);
@@ -492,6 +522,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
             filter.name = "<unnamed>";
             filterListModel.add(index, filter);
             filterList.setSelectedIndex(index);
+
+            // TODO: there seemed to be a bug here with copied patterns being shared
         }
     }
 
@@ -544,6 +576,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
     private boolean equals(XFilesFilterConfiguration externalizable, ConfigurableFilterModel configurable) {
         if (!equals("name", externalizable.NAME, configurable.name)) return false;
+        if (!equals("match", externalizable.MATCH_ALL, configurable.matchAll)) return false;
 
         if (!equals("path", externalizable.ACCEPTED_PATH_NAMES, configurable.pathModel.getSelectedItems())) return false;
         if (!equals("attribute", externalizable.ACCEPTED_ATTRIBUTE_NAMES, configurable.attributeModel.getSelectedItems())) return false;
@@ -813,6 +846,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
     private class ConfigurableFilterModel {
 
         private String name;
+        private boolean matchAll;
 
         // TODO: we may want to hold these in an array
         private PathTableModel pathModel;
@@ -829,6 +863,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
          */
         public ConfigurableFilterModel(ConfigurableFilterModel that) {
             this.name = that.name;
+            this.matchAll = that.matchAll;
+
             this.pathModel = new PathTableModel(that.pathModel);
             this.attributeModel = new ConfigurationTableModel(that.attributeModel);
             this.statusModel = new ConfigurationTableModel(that.statusModel);
@@ -839,6 +875,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         public ConfigurableFilterModel(CountingFilterListener listener) {
             pathModel = new PathTableModel(listener.getPathMap());
+            matchAll = false;
+
             attributeModel = new ConfigurationTableModel(listener.getAttributeMap());
             statusModel = new ConfigurationTableModel(listener.getStatusMap());
             typeModel = new ConfigurationTableModel(listener.getTypeMap());
@@ -848,6 +886,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         public void reset(XFilesFilterConfiguration configuration) {
             name = configuration.NAME;
+            matchAll = configuration.MATCH_ALL;
+
             pathModel.setSelectedItems(configuration.ACCEPTED_PATH_NAMES);
             attributeModel.setSelectedItems(configuration.ACCEPTED_ATTRIBUTE_NAMES);
             statusModel.setSelectedItems(configuration.ACCEPTED_STATUS_NAMES);
@@ -860,6 +900,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
             log.debug("saving filter " + name);
             configuration.log();
             configuration.NAME = name;
+            configuration.MATCH_ALL = matchAll;
 
             configuration.ACCEPTED_PATH_NAMES.clear();
             configuration.ACCEPTED_ATTRIBUTE_NAMES.clear();
