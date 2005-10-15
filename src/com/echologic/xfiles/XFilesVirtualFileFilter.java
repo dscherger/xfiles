@@ -243,4 +243,7 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         }
     }
 
+    public String toString() {
+        return name;
+    }
 }

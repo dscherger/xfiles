@@ -60,7 +60,8 @@ public class XFilesToolWindow extends JPanel {
 
             log.debug("addAndScroll " + file);
 
-            if (!model.contains(file) && refresh.getFilter().accept(file)) {
+            XFilesVirtualFileFilter filter = refresh.getFilter();
+            if (!model.contains(file) && filter != null && filter.accept(file)) {
                 model.addElement(file);
                 log.debug("added " + file);
             }
@@ -83,9 +84,13 @@ public class XFilesToolWindow extends JPanel {
 
         public void fileClosed(FileEditorManager source, VirtualFile file) {
             log.debug("file closed " + file.getName());
+            XFilesVirtualFileFilter filter = refresh.getFilter();
             int index = model.indexOf(file);
-            if (index >= 0)
+
+            if (index >= 0 && filter != null && !filter.accept(file))
                 model.removeElementAt(index);
+
+            // TODO: set new selected element
         }
 
         public void selectionChanged(FileEditorManagerEvent event) {
@@ -193,9 +198,6 @@ public class XFilesToolWindow extends JPanel {
         super(new BorderLayout());
 
         XFilesConfiguration configuration = (XFilesConfiguration) project.getComponent(XFilesConfiguration.class);
-        XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
-
-        refresh.setFilter(filter);
 
         scrollToSource.setSelected(configuration.SCROLL_TO_SOURCE);
         scrollFromSource.setSelected(configuration.SCROLL_FROM_SOURCE);

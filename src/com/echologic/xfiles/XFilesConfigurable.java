@@ -9,10 +9,10 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -20,7 +20,6 @@ import java.util.List;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -364,6 +363,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         ///////////////////////////
 
+        /*
         JButton testButton = new JButton("Test Filter");
 
         constraints.gridx = 3;
@@ -378,6 +378,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         constraints.gridheight = 2;
 
         panel.add(new ListScrollPane(testList), constraints);
+        */
+
         return panel;
     }
 

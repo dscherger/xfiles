@@ -11,6 +11,7 @@ import javax.swing.JComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -107,44 +108,35 @@ public class FilterListComboBoxAction extends ComboBoxAction {
 
         XFilesVirtualFileFilter selected = null;
 
-        if (size > 0) {
-
-            for (int i=0; i<size; i++) {
-                XFilesFilterConfiguration config = (XFilesFilterConfiguration) configuration.CONFIGURED_FILTERS.get(i);
-                XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
-                filter.setConfiguration(config);
-
-                SelectFilterAction action = new SelectFilterAction(this, filter);
-                group.add(action);
-
-                // select the first filter by default but select the named filter when it matches
-                if (selected == null || filter.getName().equals(configuration.SELECTED_FILTER))
-                    selected = filter;
-
-                log.debug("added filter " + filter.getName() + " selected " + selected.getName());
-            }
-
-        } else {
-            // TODO: we shouldn't really need a default filter
-            // it's possible that we need one for the group to be properly created?!?
-            // i.e. the drop down doesn't *ever* work if it has no elements initially 
-
-            String name = "default filter";
-
+        for (int i=0; i<size; i++) {
+            XFilesFilterConfiguration config = (XFilesFilterConfiguration) configuration.CONFIGURED_FILTERS.get(i);
             XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
-            filter.setName(name);
+            filter.setConfiguration(config);
 
             SelectFilterAction action = new SelectFilterAction(this, filter);
             group.add(action);
 
-            configuration.SELECTED_FILTER = "";
-            selected = filter;
+            // select the first filter by default but select the named filter when it matches
+            if (selected == null || filter.getName().equals(configuration.SELECTED_FILTER))
+                selected = filter;
 
             log.debug("added filter " + filter.getName() + " selected " + selected.getName());
         }
 
         refreshAction.setFilter(selected);
-        presentation.setText(selected.getName());
+
+        String name = "";
+        if (selected != null) name = selected.getName();
+        presentation.setText(name);
+
+        // if the group is entirely empty we add a configuration action
+        // this is done because it seems that if the group is ever allowed
+        // to be entirely empty the drop down stops functioning properly
+        
+        if (group.getChildrenCount() == 0) {
+            AnAction configure = new EditConfigurationsAction();
+            group.add(configure);
+        }
     }
 
 }
