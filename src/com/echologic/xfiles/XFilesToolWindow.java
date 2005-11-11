@@ -5,19 +5,14 @@
  */
 package com.echologic.xfiles;
 
-import java.awt.BorderLayout;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.ListCellRenderer;
-import javax.swing.ListSelectionModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -30,11 +25,25 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.BorderLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
-public class XFilesToolWindow extends JPanel {
+public class XFilesToolWindow extends JPanel implements DataProvider {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
@@ -47,6 +56,7 @@ public class XFilesToolWindow extends JPanel {
     private RefreshAction refresh = new RefreshAction(model);
 
     private FileEditorManager editor;
+    private Project project;
 
     private int scrolling = 0;
 
@@ -193,10 +203,38 @@ public class XFilesToolWindow extends JPanel {
         }
     };
 
+    /**
+     * Displays the same popup menu as you would get when right-clicking on
+     * a file in the project view.
+     */
+    private MouseAdapter popupMouseListener = new MouseAdapter() {
+        public void mousePressed(MouseEvent mouseEvent) {
+            // Make the item under the mouse become selected. If the item
+            // is already selected then don't change the selection at all
+            // since there may be multiple files selected
+            int i = list.locationToIndex(mouseEvent.getPoint());
+            if (i >= 0 && !list.isSelectedIndex(i)) {
+                list.setSelectedIndex(i);
+            }
+        }
+
+        public void mouseClicked(MouseEvent mouseEvent) {
+            if (SwingUtilities.isRightMouseButton(mouseEvent) && list.getSelectedValue() != null) {
+                ActionManager am = ActionManager.getInstance();
+
+                // Don't know if I need to create the actionPopupMenu for each event or if
+                // it can be reused. To be safe, I'll just recreate each time.
+                DefaultActionGroup actionGroup = (DefaultActionGroup) am.getAction(ActionPlaces.PROJECT_VIEW_POPUP + "Menu");
+                ActionPopupMenu actionPopupMenu = am.createActionPopupMenu(ActionPlaces.PROJECT_VIEW_POPUP, actionGroup);
+                actionPopupMenu.getComponent().show(list, mouseEvent.getX(), mouseEvent.getY());
+            }
+        }
+    };
+
 
     public XFilesToolWindow(Project project) {
         super(new BorderLayout());
-
+        this.project = project;
         XFilesConfiguration configuration = (XFilesConfiguration) project.getComponent(XFilesConfiguration.class);
 
         scrollToSource.setSelected(configuration.SCROLL_TO_SOURCE);
@@ -214,7 +252,6 @@ public class XFilesToolWindow extends JPanel {
         group.add(scrollFromSource);
 
         ActionManager actionManager = ActionManager.getInstance();
-
         ActionToolbar toolbar = actionManager.createActionToolbar("XFilesActionToolbar", group, true);
         add(toolbar.getComponent(), BorderLayout.NORTH);
 
@@ -224,6 +261,7 @@ public class XFilesToolWindow extends JPanel {
         FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
         ListCellRenderer renderer = new XFilesListCellRenderer(fileStatusManager);
         list.setCellRenderer(renderer);
+        list.addMouseListener(popupMouseListener);
 
         // TODO: might want some icons in a gutter to indicate things?
         // for example a way to open/close selected files
@@ -242,6 +280,33 @@ public class XFilesToolWindow extends JPanel {
         scroller.getViewport().setView(list);
 
         add(scroller, BorderLayout.CENTER);
+    }
+
+    /**
+     * Implements DataProvider interface so that the popup menu actions know
+     * which files to operate on.
+     *
+     * @param string a value DataConstants indicating what kind of data is being
+     *               requested
+     * @return virtual files or psi elements of the selected files, and null for
+     *         all other types of data requested 
+     */
+    @Nullable
+    public Object getData(String string) {
+        if (DataConstants.VIRTUAL_FILE.equals(string)) {
+            return list.getSelectedValue();
+        }
+        else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(string)) {
+            Object[] selectedValues = list.getSelectedValues();
+            VirtualFile[] files = new VirtualFile[selectedValues.length];
+            System.arraycopy(selectedValues, 0, files, 0, selectedValues.length);
+            return files;
+        }
+        else if (DataConstants.PSI_FILE.equals(string) || DataConstants.PSI_ELEMENT.equals(string)) {
+            VirtualFile selectedValue = (VirtualFile) list.getSelectedValue();
+            return PsiManager.getInstance(project).findFile(selectedValue);
+        }
+        return null;
     }
 
 }
