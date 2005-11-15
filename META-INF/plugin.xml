@@ -1,22 +1,54 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
-<idea-plugin url="http://www.echologic.com/...">
+<idea-plugin url="http://www.echologic.com/plugins/xfiles.html">
 
     <name>XFiles</name>
 
     <description>
-        The XFiles plugin displays a list of files selected according to a configurable
-        set of filters. Various attributes may be used as filtering criteria such as file
-        status, file type, module, version control system, source and test files, etc.
+        <![CDATA[
+        <p>
+        The XFiles plugin offers a configurable, dynamic mechanism for defining working
+        sets of files and allowing navigation between files selected by a working set.
+        Working sets may be filtered using any or all of the following criteria:
+
+        <ul>
+        <li>File path names matching specified patterns (pathname globs)
+        <li>File attributes (open files, source files, test files, ignored files)
+        <li>File status according to the underlying VCS (added, changed, unchanged, unknown, etc.)
+        <li>File type (java files, text files, xml files, properties files, etc.)
+        <li>The VCS the file is registered with (CVS, SVN, P4, etc.)
+        <li>The project module the file exists in
+        </ul>
+
+        <p>
+        The resulting working set's files are is displayed in a tool window for navigation
+        and operation.
+         ]]>
     </description>
 
     <version>0.1</version>
     <vendor url="http://www.echologic.com" email="derek@echologic.com">Derek Scherger</vendor>
     <change-notes>
-        Some pre-defined test filters are working and the ability to customize filters is coming soon!
+        <![CDATA[
+        <dl>
+
+        <dt><b>November 14, 2005 (Release 0.1)</b></dt>
+        <dd>
+        The first public release of XFiles is finally available from the
+        <a href="http://plugins.intellij.net/plugins/view/?id=XFiles">IntelliJ plugin repository</a>.
+        <dd>
+
+        <dt><b>November 11, 2005</b></dt>
+        <dd>
+        Special thanks to Michael Beauregard for the addition of context menus to the XFiles tool window
+        and a little bit of encouragement to get this thing into the plugin repository.
+        </dd>
+
+        </dl>
+        ]]>
     </change-notes>
 
-    <idea-version since-build="4.0" until-build="5.0"/>
+    <idea-version since-build="5.0" until-build="6.0"/>
 
     <application-components>
     </application-components>

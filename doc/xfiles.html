@@ -1,0 +1,135 @@
+<html>
+
+<head>
+<title>
+XFiles IntelliJ plugin
+</title>
+</head>
+
+<body>
+<h1>XFiles IntelliJ plugin</h1>
+
+<p>
+The XFiles plugin offers a configurable, dynamic mechanism for defining working
+sets of files and allowing navigation between files selected by a working set.
+Working sets may be filtered using any or all of the following criteria:
+
+<ul>
+<li>File path names matching specified patterns (pathname globs)
+<li>File attributes (open files, source files, test files, ignored files)
+<li>File status according to the underlying VCS (added, changed, unchanged, unknown, etc.)
+<li>File type (java files, text files, xml files, properties files, etc.)
+<li>The VCS the file is registered with (CVS, SVN, P4, etc.)
+<li>The project module the file exists in
+</ul>
+
+<p>
+The resulting working set's files are is displayed in a tool window for navigation
+and operation.
+<p>
+This plugin is an attempt to improve on the currently available navigation
+tools, which often don't seem to be quite what I would like:
+
+<ul>
+<li>the stock open file tabbed navigation
+<li>the stock recent files list (ctrl-e)
+<li>the TabSwitch plugin's MRU open files list (alt-a)
+<li>the TabReorder plugin
+<li>the Workspaces plugin
+<li>the new favorites feature in IntelliJ 5.x
+</ul>
+
+<p>
+Maybe I just have too many files open, but I rarely find the tabbed navigation
+between open files to be very useful. Several rows of tabs take up a lot of
+space and one scrolling row simply hides many of the open files that I might
+want to navigate to. The fact that the tabs don't seem to be in stable or
+predictable order exacerbates these problems.  I think the fundamental problem
+though, is that the current working set of files is not always the set of files
+that are open in the editor.
+
+<p>
+Originally, I relied on the recent files list quite heavily, but since installing
+the TabSwitch plugin I rarely use it. Up until recently I was using the TabSwitch
+plugin MRU list far more than any of the others.
+
+<p>
+The TabReorder plugin can be useful but really seems like a partial fix for
+the fact that the editor tabs are not in stable or predictable order. It might
+be good if this plugin allowed for defined tab orders that didn't require manual
+effort to maintain.
+
+<p>
+The Workspaces plugin and new (?) favorites feature seem somewhat static and require
+quite a lot of manual effort to maintain in a useful state.
+
+<h1>Examples</h1>
+
+<dl>
+
+<dt>currently open files</dt>
+<dd>
+selected as being open in the current editor; very long lists of open files are handled well
+</dd>
+
+<dt>changed files</dt>
+<dd>
+selected by version control status of added, changed, etc.; this can often be a good approximation of the 
+files you are likely to do further work on
+</dd>
+
+<dt>files that have been created but not added to perforce</dt>
+<dd>selected by version control status of unknown</dd>
+
+<dt>build system files</dt>
+<dd>selected by path glob of build*.xml</dd>
+
+</dl>
+
+<h1>News</h1>
+
+<dl>
+
+<dt><b>November 14, 2005 (Release 0.1)</b></dt>
+<dd>
+The first public release of XFiles is finally available from the 
+<a href="http://plugins.intellij.net/plugins/view/?id=XFiles">IntelliJ plugin repository</a>.
+<dd>
+
+<dt><b>November 11, 2005</b></dt>
+<dd>
+Special thanks to Michael Beauregard for the addition of context menus to the XFiles tool window
+and a little bit of encouragement to get this thing into the plugin repository.
+</dd>
+
+</dl>
+
+<h1>Todo</h1>
+
+<ul>
+<li>we need a proper tool window icon image
+<li>allow for different sort orders in the tool window (ascending, descending, camel case order, file size, etc.)
+<li>the configuration UI code is a disaster and really needs a good cleanup.
+<li>possibly add file sizes, last modification times, etc. to the tool window.
+</ul>
+
+<h1>Bugs</h1>
+
+<ul>
+<li>Invalid glob patterns are not detected by the configuration UI and will cause problems when
+the filter runs.
+<li>Deleted files are not listed by the filter because they are not available from the IntelliJ 
+project roots. If we can find these from the underlying VCS they would be available for display
+in filters that select them.
+<li>I'm sure there are plenty of others too!
+</ul>
+
+<h1>Author</h1>
+
+<p>
+Derek Scherger &lt;derek at echologic dot com&gt;
+<p>
+I hope you find this plugin useful. Please email me if you find bugs or have ideas for new features.
+</body>
+
+</html>
