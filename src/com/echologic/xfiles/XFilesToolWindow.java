@@ -19,12 +19,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileMoveEvent;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,6 +155,10 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
             log.debug("moved " + event.getFile() + "@" + event.getFile().hashCode());
             log.debug(" from " + event.getOldParent());
             log.debug("   to " + event.getNewParent());
+        }
+
+        public void fileCopied(VirtualFileCopyEvent event) {
+            log.debug("copied " + event.getFile() + "@" + event.getFile().hashCode());
         }
 
         // ignore events before changes actually occur
@@ -304,7 +303,8 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
         }
         else if (DataConstants.PSI_FILE.equals(string) || DataConstants.PSI_ELEMENT.equals(string)) {
             VirtualFile selectedValue = (VirtualFile) list.getSelectedValue();
-            return PsiManager.getInstance(project).findFile(selectedValue);
+            if (selectedValue != null)
+                return PsiManager.getInstance(project).findFile(selectedValue);
         }
         return null;
     }
