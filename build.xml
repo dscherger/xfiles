@@ -2,13 +2,10 @@
 
 <project name="XFiles Plugin" default="all" basedir=".">
     <property file="build.properties"/>
+    <property name="plugin.dir" value="."/>
     <property name="idea.lib" value="${idea.dir}/lib"/>
-    <property name="idea.redist" value="${idea.dir}/redist"/>
-
-    <taskdef name="javac2" classname="com.intellij.uiDesigner.ant.Javac2" classpath="${idea.redist}/javac2.jar"/>
 
     <property name="plugin.name" value="xfiles"/>
-
     <property name="build.debug" value="on"/>
 
     <property name="dir.dest" value="${basedir}/build"/>
@@ -28,7 +25,7 @@
     <property name="zip.package" value="${dir.package}/${plugin.name}.zip"/>
     <property name="zip.src" value="${dir.dest.src}/src.zip"/>
 
-    <filelist id="plugin_classpath" dir="${idea.lib}" files="idea.jar,oromatcher.jar,jdom.jar"/>
+    <filelist id="plugin_classpath" dir="${idea.lib}" files="*.jar"/>
 
     <target name="init">
         <mkdir dir="${dir.dest.metainf}"/>
@@ -47,29 +44,19 @@
     <target name="all" depends="init, compile, jar, install" description="Build everything"/>
 
     <target name="compile" depends="init" description="Compile all the source">
-        <!--source="1.5"-->
-        <javac2
+        <javac
             destdir="${dir.dest.classes}"
             debug="true"
             includeAntRuntime="no"
             verbose="false"
             fork="true">
-            <compilerarg value="-J-Xbootclasspath/p:${idea.lib}/generics/gjc-rt.jar"/>
-            <compilerarg value="-J-Xmx256m"/>
             <src path="${dir.src}"/>
-            <bootclasspath>
-                <pathelement location="${idea.lib}/generics/collect.jar"/>
-                <pathelement location="${jdk.dir}/jre/lib/rt.jar"/>
-            </bootclasspath>
-
             <classpath>
                 <fileset dir="${idea.lib}">
-                    <include name="*.jar"/>
-                    <exclude name="**/collect.jar"/>
-                    <exclude name="**/gjc-rt.jar"/>
+                    <include name="**/*.jar"/>
                 </fileset>
             </classpath>
-        </javac2>
+        </javac>
 
     </target>
 
@@ -105,18 +92,9 @@
             failonerror="false"
             maxmemory="128M"
             windowtitle="${plugin.name}">
-            <!--
-            <classpath>
-                <pathelement location="${dir.dest.classes}"/>
-                <pathelement location="${dir.jdk.lib}/tools.jar"/>
-                <filelist refid="plugin_classpath"/>
-            </classpath>
-            -->
             <classpath>
                 <fileset dir="${idea.lib}">
-                    <include name="*.jar"/>
-                    <exclude name="**/collect.jar"/>
-                    <exclude name="**/gjc-rt.jar"/>
+                    <include name="**/*.jar"/>
                 </fileset>
             </classpath>
 
