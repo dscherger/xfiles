@@ -19,12 +19,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileMoveEvent;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +29,8 @@ import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.BorderLayout;
@@ -48,8 +45,8 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
     private Logger log = Logger.getInstance(getClass().getName());
 
     private AnAction configure = new EditConfigurationsAction();
-    private ScrollAction scrollToSource = ScrollAction.scrollToSource();
-    private ScrollAction scrollFromSource = ScrollAction.scrollFromSource();
+    private ScrollAction scrollToSource;
+    private ScrollAction scrollFromSource;
 
     private XFilesListModel model = new XFilesListModel();
     private JList list = new JList(model);
@@ -162,6 +159,10 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
             log.debug("   to " + event.getNewParent());
         }
 
+        public void fileCopied(VirtualFileCopyEvent event) {
+            log.debug("copied " + event.getFile() + "@" + event.getFile().hashCode());
+        }
+
         // ignore events before changes actually occur
 
         public void beforePropertyChange(VirtualFilePropertyEvent event) {}
@@ -235,7 +236,18 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
     public XFilesToolWindow(Project project) {
         super(new BorderLayout());
         this.project = project;
-        XFilesConfiguration configuration = (XFilesConfiguration) project.getComponent(XFilesConfiguration.class);
+        final XFilesConfiguration configuration = (XFilesConfiguration) project.getComponent(XFilesConfiguration.class);
+
+        scrollToSource = ScrollAction.scrollToSource(new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+                configuration.SCROLL_TO_SOURCE = scrollToSource.isSelected();
+            }
+        });
+        scrollFromSource = ScrollAction.scrollFromSource(new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+                configuration.SCROLL_FROM_SOURCE = scrollFromSource.isSelected();
+            }
+        });
 
         scrollToSource.setSelected(configuration.SCROLL_TO_SOURCE);
         scrollFromSource.setSelected(configuration.SCROLL_FROM_SOURCE);
@@ -253,6 +265,7 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
 
         ActionManager actionManager = ActionManager.getInstance();
         ActionToolbar toolbar = actionManager.createActionToolbar("XFilesActionToolbar", group, true);
+
         add(toolbar.getComponent(), BorderLayout.NORTH);
 
         // TODO: consider re-ordering editor tabs to match selected files here?
@@ -304,7 +317,8 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
         }
         else if (DataConstants.PSI_FILE.equals(string) || DataConstants.PSI_ELEMENT.equals(string)) {
             VirtualFile selectedValue = (VirtualFile) list.getSelectedValue();
-            return PsiManager.getInstance(project).findFile(selectedValue);
+            if (selectedValue != null)
+                return PsiManager.getInstance(project).findFile(selectedValue);
         }
         return null;
     }

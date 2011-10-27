@@ -26,7 +26,7 @@
          ]]>
     </description>
 
-    <version>0.1</version>
+    <version>0.2</version>
     <vendor url="http://www.echologic.com" email="derek@echologic.com">Derek Scherger</vendor>
     <change-notes>
         <![CDATA[
@@ -47,8 +47,6 @@
         </dl>
         ]]>
     </change-notes>
-
-    <idea-version since-build="5.0" until-build="6.0"/>
 
     <application-components>
     </application-components>
@@ -71,5 +69,10 @@
 
     <actions>
     </actions>
+
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.vcs</depends>
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.xml</depends>
 
 </idea-plugin>
