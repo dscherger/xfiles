@@ -6,8 +6,8 @@
 package com.echologic.xfiles;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.util.Icons;
 
 /**
@@ -15,21 +15,17 @@ import com.intellij.util.Icons;
  */
 public abstract class XFilesIcons extends Icons {
 
-    public static final Icon SCROLL_TO_ICON = load("/general/autoscrollToSource.png");
-    public static final Icon SCROLL_FROM_ICON = load("/general/autoscrollFromSource.png");
-    public static final Icon REMOVE_ICON = load("/general/remove.png");
-    public static final Icon COPY_ICON = load("/general/copy.png");
+    public static final Icon SCROLL_TO_ICON = AllIcons.General.AutoscrollToSource;
+    public static final Icon SCROLL_FROM_ICON = AllIcons.General.AutoscrollFromSource;
+    public static final Icon REMOVE_ICON = AllIcons.General.Remove;
+    public static final Icon COPY_ICON = AllIcons.Actions.Copy;
 
-    public static final Icon DOWN_ICON = load("/actions/moveDown.png");
-    public static final Icon UP_ICON = load("/actions/moveUp.png");
-    public static final Icon SYNC_ICON = load("/actions/sync.png");
-    public static final Icon PROPERTIES_ICON = load("/actions/properties.png");
+    public static final Icon DOWN_ICON = AllIcons.Actions.MoveDown;
+    public static final Icon UP_ICON = AllIcons.Actions.MoveUp;
+    public static final Icon SYNC_ICON = AllIcons.Actions.Refresh;
+    public static final Icon PROPERTIES_ICON = AllIcons.Actions.Properties;
 
-    public static final Icon FILTER_ICON = load("/debugger/class_filter.png");
+    public static final Icon FILTER_ICON = AllIcons.Debugger.Class_filter;
 
-    public static final Icon XFILES_ICON = load("/objectBrowser/visibilitySort.png");
-
-    private static Icon load(String path) {
-        return new ImageIcon(XFilesIcons.class.getResource(path));
-    }
+    public static final Icon XFILES_ICON = AllIcons.ObjectBrowser.VisibilitySort;
 }
