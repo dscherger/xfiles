@@ -3,7 +3,7 @@
 <project name="XFiles Plugin" default="all" basedir=".">
     <property file="build.properties"/>
     <property name="plugin.dir" value="."/>
-    <property name="idea.lib" value="${idea.dir}/lib"/>
+    <property name="idea.lib" value="${idea.dir}/Contents/lib"/>
 
     <property name="plugin.name" value="xfiles"/>
     <property name="build.debug" value="on"/>
