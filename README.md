@@ -36,15 +36,15 @@ Adding the following to the log.xml configuration file will configure log4j to l
 messages from the xfiles plugin to the xfiles.log file in the system log dir.
 
 	<appender name="XFILES" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="$LOG_DIR$/xfiles.log"/>
 		<param name="MaxFileSize" value="1Mb"/>
 		<param name="MaxBackupIndex" value="3"/>
-		<param name="file" value="$SYSTEM_DIR$/log/xfiles.log"/>
 		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d %-5p %t %c %m%n"/>
+			<param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>
 		</layout>
 	</appender>
-
-	<category name=="com.echologic.xfiles" >
+	
+	<category name="com.echologic.xfiles">
 		<appender-ref ref="XFILES"/>
 		<priority value="DEBUG"/>
 	</category>
