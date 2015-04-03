@@ -10,9 +10,9 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -306,16 +306,16 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
      */
     @Nullable
     public Object getData(String string) {
-        if (DataConstants.VIRTUAL_FILE.equals(string)) {
+        if (PlatformDataKeys.VIRTUAL_FILE.is(string)) {
             return list.getSelectedValue();
         }
-        else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(string)) {
+        else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(string)) {
             Object[] selectedValues = list.getSelectedValues();
             VirtualFile[] files = new VirtualFile[selectedValues.length];
             System.arraycopy(selectedValues, 0, files, 0, selectedValues.length);
             return files;
         }
-        else if (DataConstants.PSI_FILE.equals(string) || DataConstants.PSI_ELEMENT.equals(string)) {
+        else if (PlatformDataKeys.PSI_FILE.is(string) || PlatformDataKeys.PSI_ELEMENT.is(string)) {
             VirtualFile selectedValue = (VirtualFile) list.getSelectedValue();
             if (selectedValue != null)
                 return PsiManager.getInstance(project).findFile(selectedValue);

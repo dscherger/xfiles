@@ -10,7 +10,8 @@ import java.util.List;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -52,7 +53,8 @@ public class RefreshAction extends AnAction {
 
         long start = System.currentTimeMillis();
 
-        final Project project = (Project) event.getDataContext().getData(DataConstants.PROJECT);
+        DataContext context = event.getDataContext();
+        final Project project = PlatformDataKeys.PROJECT.getData(context);
 
         CountingFilterListener listener = new CountingFilterListener();
         filter.setListener(listener);
