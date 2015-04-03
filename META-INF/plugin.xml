@@ -26,11 +26,21 @@
          ]]>
     </description>
 
-    <version>0.2</version>
+    <version>0.3</version>
     <vendor url="http://www.echologic.com" email="derek@echologic.com">Derek Scherger</vendor>
     <change-notes>
         <![CDATA[
         <dl>
+
+        <dt><b>April 2, 2014 (Release 0.3)</b></dt>
+        <dd>
+        Updated to work with latest IntelliJ and AppCode
+        <dd>
+
+        <dt><b>June 6, 2011 (Release 0.2)</b></dt>
+        <dd>
+        Updated to work with AppCode
+        <dd>
 
         <dt><b>November 14, 2005 (Release 0.1)</b></dt>
         <dd>
