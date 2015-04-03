@@ -1,7 +1,7 @@
 BUILDING
 ========
 
-The ant build.xml requires a build.properties file that must be created with the
+The ant `build.xml` requires a `build.properties` file that must be created with the
 following properties, set appropriately for your environment.
 
 	idea.dir=$IDEA_HOME
@@ -14,6 +14,12 @@ below before restarting).
 
 The plugin.dir is separated out as plugins may be installed on a per-user basis
 in their local configuration directories.
+
+On OSX the `build.properties` file looks like:
+
+	idea.dir=/Applications/IntelliJ\ IDEA\ 14.app/Contents
+	plugin.dir=/Users/derek/Library/Application Support/IntelliJIdea14
+	jdk.dir=/Library/Java/JavaVirtualMachines/jdk1.8.0_25.jdk/Contents/Home
 
 LOGGING
 =======
