@@ -1,4 +1,5 @@
 BUILDING
+========
 
 The ant build.xml requires a build.properties file that must be created with the
 following properties, set appropriately for your environment.
@@ -15,14 +16,15 @@ The plugin.dir is separated out as plugins may be installed on a per-user basis
 in their local configuration directories.
 
 LOGGING
+=======
 
 IntelliJ uses log4j internally which is rather convenient for logging things from
 plugins under development!
 
-Logging is configured in $IDEA_HOME/bin/log.xml using the log4j xml configuration.
-Log files are written to the IntelliJ $SYSTEM_DIR/log/idea.log[.n]
+Logging is configured in `$IDEA_HOME/bin/log.xml` using the log4j xml configuration.
+Log files are written to the IntelliJ `$SYSTEM_DIR/log/idea.log[.n]`
 
-The $IDEA_HOME/bin/idea.lax file might indicate where the SYSTEM_DIR is.
+The `$IDEA_HOME/bin/idea.lax` file might indicate where the SYSTEM_DIR is.
 
 Adding the following to the log.xml configuration file will configure log4j to log
 messages from the xfiles plugin to the xfiles.log file in the system log dir.
@@ -45,6 +47,3 @@ On my setup, the log4j.xml configuration seems to use ' \n' to end message lines
 but this looks like a bug. Standard log4j configuration uses %n to issue a platform
 specific line ending. Also, the PatternLayout above is different than the one
 intellij's configuration uses. Set it to something that makes you happy.
-
-Cheers,
-Derek

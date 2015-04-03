@@ -1,4 +1,6 @@
 *~
 build
+build.properties
 out
 .DS_Store
+.idea
