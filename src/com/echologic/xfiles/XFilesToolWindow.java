@@ -19,7 +19,13 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileCopyEvent;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileMoveEvent;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +42,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -49,7 +56,7 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
     private ScrollAction scrollFromSource;
 
     private XFilesListModel model = new XFilesListModel();
-    private JList list = new JList(model);
+    private JList<VirtualFile> list = new JList<>(model);
     private RefreshAction refresh = new RefreshAction(model);
 
     private FileEditorManager editor;
@@ -236,7 +243,7 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
     public XFilesToolWindow(Project project) {
         super(new BorderLayout());
         this.project = project;
-        final XFilesConfiguration configuration = (XFilesConfiguration) project.getComponent(XFilesConfiguration.class);
+        final XFilesConfiguration configuration = project.getComponent(XFilesConfiguration.class);
 
         scrollToSource = ScrollAction.scrollToSource(new ChangeListener() {
             public void stateChanged(ChangeEvent changeEvent) {
@@ -272,7 +279,7 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
         // TODO: consider a sync option to sync editors with our list
 
         FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
-        ListCellRenderer renderer = new XFilesListCellRenderer(fileStatusManager);
+        ListCellRenderer<VirtualFile> renderer = new XFilesListCellRenderer(fileStatusManager);
         list.setCellRenderer(renderer);
         list.addMouseListener(popupMouseListener);
 
@@ -310,13 +317,13 @@ public class XFilesToolWindow extends JPanel implements DataProvider {
             return list.getSelectedValue();
         }
         else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(string)) {
-            Object[] selectedValues = list.getSelectedValues();
-            VirtualFile[] files = new VirtualFile[selectedValues.length];
-            System.arraycopy(selectedValues, 0, files, 0, selectedValues.length);
-            return files;
+            List<VirtualFile> files = list.getSelectedValuesList();
+            VirtualFile[] array = new VirtualFile[files.size()];
+            files.toArray(array);
+            return array;
         }
         else if (PlatformDataKeys.PSI_FILE.is(string) || PlatformDataKeys.PSI_ELEMENT.is(string)) {
-            VirtualFile selectedValue = (VirtualFile) list.getSelectedValue();
+            VirtualFile selectedValue = list.getSelectedValue();
             if (selectedValue != null)
                 return PsiManager.getInstance(project).findFile(selectedValue);
         }

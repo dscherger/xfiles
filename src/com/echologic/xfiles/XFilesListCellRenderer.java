@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
-public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
+public class XFilesListCellRenderer extends JLabel implements ListCellRenderer<VirtualFile> {
 
     private FileStatusManager fileStatusManager;
 
@@ -28,13 +28,12 @@ public class XFilesListCellRenderer extends JLabel implements ListCellRenderer {
     }
 
     public Component getListCellRendererComponent(JList list,
-                                                  Object value,
+                                                  VirtualFile file,
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
-	if (value == null) return this;
+        if (file == null) return this;
 
-        VirtualFile file = (VirtualFile) value;
         FileType type = file.getFileType();
 
         setText(file.getName());

@@ -5,8 +5,6 @@
  */
 package com.echologic.xfiles;
 
-import java.util.Iterator;
-
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -70,9 +68,8 @@ public class CountingFilterListener implements FilterListener {
     }
 
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
-        for (Iterator iterator = attributeMap.getCounters().iterator(); iterator.hasNext(); ) {
-            VirtualFileCounter counter = (VirtualFileCounter) iterator.next();
+        StringBuilder buffer = new StringBuilder();
+        for (VirtualFileCounter counter : attributeMap.getCounters()) {
             buffer.append(counter.getCount()).append(" ");
             buffer.append(counter.getName()).append("; ");
         }

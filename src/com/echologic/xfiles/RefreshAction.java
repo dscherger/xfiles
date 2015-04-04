@@ -5,7 +5,6 @@
  */
 package com.echologic.xfiles;
 
-import java.util.Iterator;
 import java.util.List;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -65,11 +64,10 @@ public class RefreshAction extends AnAction {
 
         listener.log();
 
-        List included = content.getIncluded();
+        List<VirtualFile> included = content.getIncluded();
 
         model.clear();
-        for (Iterator iterator = included.iterator(); iterator.hasNext();) {
-            VirtualFile file = (VirtualFile) iterator.next();
+        for (VirtualFile file : included) {
             model.addElement(file);
         }
 
@@ -83,7 +81,7 @@ public class RefreshAction extends AnAction {
         FileEditorManager editorManager = FileEditorManager.getInstance(project);
         VirtualFile[] files = editorManager.getSelectedFiles();
 
-        if (files != null && files.length > 0)
+        if (files.length > 0)
             model.setSelectedItem(files[0]);
     }
 

@@ -14,14 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
  */
-public class VirtualFileComparator implements Comparator {
-
-    public int compare(Object o1, Object o2) {
-        VirtualFile file1 = (VirtualFile) o1;
-        VirtualFile file2 = (VirtualFile) o2;
-
-        return compare(file1, file2);
-    }
+public class VirtualFileComparator implements Comparator<VirtualFile> {
 
     public int compare(VirtualFile file1, VirtualFile file2) {
         FileType type1 = file1.getFileType();

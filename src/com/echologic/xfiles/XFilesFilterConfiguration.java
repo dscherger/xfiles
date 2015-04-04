@@ -5,14 +5,14 @@
  */
 package com.echologic.xfiles;
 
+import org.jdom.Element;
+
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
-
-import org.jdom.Element;
 
 /**
  * TODO: consider ExternalizableFilterConfiguration and EditableFilterConfiguration
@@ -28,6 +28,9 @@ public class XFilesFilterConfiguration implements JDOMExternalizable {
 
     private Logger log = Logger.getInstance(getClass().getName());
 
+    /**
+     * Name of the this filter configuration.
+     */
     public String NAME;
 
     /**

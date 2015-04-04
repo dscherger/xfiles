@@ -17,6 +17,7 @@ import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -36,7 +37,7 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
 
     public String SELECTED_FILTER;
 
-    public List CONFIGURED_FILTERS = new ArrayList();
+    public List<XFilesFilterConfiguration> CONFIGURED_FILTERS = new ArrayList<>();
 
     private FilterListComboBoxAction listener;
 
@@ -55,6 +56,7 @@ public class XFilesConfiguration implements ProjectComponent, JDOMExternalizable
     public void initComponent() {}
     public void disposeComponent() {}
 
+    @NotNull
     public String getComponentName() {
         return "XFilesConfiguration";
     }

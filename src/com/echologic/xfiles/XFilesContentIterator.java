@@ -8,12 +8,12 @@ package com.echologic.xfiles;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author <a href="mailto:derek@echologic.com">Derek Scherger</a>
@@ -26,8 +26,8 @@ public class XFilesContentIterator implements ContentIterator {
 
     private XFilesVirtualFileFilter filter;
 
-    private List included = new ArrayList();
-    private List excluded = new ArrayList();
+    private List<VirtualFile> included = new ArrayList<>();
+    private List<VirtualFile> excluded = new ArrayList<>();
 
     public XFilesContentIterator(Project project) {
         this.project = project;
@@ -46,9 +46,8 @@ public class XFilesContentIterator implements ContentIterator {
 
         log.debug("iterating content under roots with filter " + filter.getName());
         filter.logConfiguration();
-        
-        for (int i = 0; i < roots.length; i++) {
-            VirtualFile root = roots[i];
+
+        for (VirtualFile root : roots) {
             log.debug("root " + root.getPath());
             index.iterateContentUnderDirectory(root, this);
         }
@@ -65,11 +64,11 @@ public class XFilesContentIterator implements ContentIterator {
         return true;
     }
 
-    public List getIncluded() {
+    public List<VirtualFile> getIncluded() {
         return included;
     }
 
-    public List getExcluded() {
+    public List<VirtualFile> getExcluded() {
         return excluded;
     }
 

@@ -7,7 +7,6 @@ package com.echologic.xfiles;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,12 +43,12 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
 
     private boolean matchAll;
 
-    private List acceptedPathNames = Collections.EMPTY_LIST;
-    private List acceptedAttributeNames = Collections.EMPTY_LIST;
-    private List acceptedStatusNames = Collections.EMPTY_LIST;
-    private List acceptedTypeNames = Collections.EMPTY_LIST;
-    private List acceptedVcsNames = Collections.EMPTY_LIST;
-    private List acceptedModuleNames = Collections.EMPTY_LIST;
+    private List<Pattern> acceptedPathNames = Collections.emptyList();
+    private List<String> acceptedAttributeNames = Collections.emptyList();
+    private List<String> acceptedStatusNames = Collections.emptyList();
+    private List<String> acceptedTypeNames = Collections.emptyList();
+    private List<String> acceptedVcsNames = Collections.emptyList();
+    private List<String> acceptedModuleNames = Collections.emptyList();
 
     private GlobCompiler compiler = new GlobCompiler();
     private Perl5Matcher matcher = new Perl5Matcher();
@@ -91,7 +90,7 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
     }
 
     private String getPatternStrings(List patterns) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("[");
         for (int i=0; i<patterns.size(); i++) {
             if (i > 0) buffer.append(", ");
@@ -114,10 +113,9 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         this.listener = listener;
     }
 
-    public List compileAcceptedNameGlobs(List globs) {
-        ArrayList list = new ArrayList();
-        for (Iterator iterator = globs.iterator(); iterator.hasNext();) {
-            String glob = (String) iterator.next();
+    public List<Pattern> compileAcceptedNameGlobs(List<String> globs) {
+        List<Pattern> list = new ArrayList<>();
+        for (String glob : globs) {
             try {
                 Pattern pattern = compiler.compile(glob);
                 log.debug("compiled glob " + glob + " to pattern " + pattern.getPattern());
@@ -181,8 +179,7 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         }
 
         String[] attributes = attributeManager.getAttributes(file);
-        for (int i = 0; i < attributes.length; i++) {
-            String attribute = attributes[i];
+        for (String attribute : attributes) {
             listener.attribute(attribute, file);
 
             if (!acceptedAttributeNames.isEmpty()) {
@@ -193,8 +190,7 @@ public class XFilesVirtualFileFilter implements VirtualFileFilter {
         log.debug("before patterns condition is " + condition.isTrue());
 
         String path = file.getPath();
-        for (Iterator iterator = acceptedPathNames.iterator(); iterator.hasNext();) {
-            Pattern pattern = (Pattern) iterator.next();
+        for (Pattern pattern : acceptedPathNames) {
             if (matcher.matches(path, pattern)) {
                 condition.evaluate(true);
                 listener.path(pattern.getPattern(), file);

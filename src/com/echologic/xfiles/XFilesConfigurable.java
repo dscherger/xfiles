@@ -35,6 +35,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -61,11 +63,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
     private JPanel panel;
 
-    private DefaultListModel filterListModel;
+    private DefaultListModel<ConfigurableFilterModel> filterListModel;
     private JList filterList;
-
-    private DefaultListModel testListModel;
-    private JList testList;
 
     private JTextField nameField;
     private PathTable pathTable;
@@ -149,7 +148,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
                 moveDown.setEnabled(selected < last);
 
                 if (selected >= first) {
-                    ConfigurableFilterModel model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
+                    ConfigurableFilterModel model = filterListModel.getElementAt(selected);
 
                     nameField.setText(model.name);
                     matchAll.setSelected(model.matchAll);
@@ -174,7 +173,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
             int selected = filterList.getSelectedIndex();
 
             if (selected >= 0) {
-                ConfigurableFilterModel model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
+                ConfigurableFilterModel model = filterListModel.getElementAt(selected);
                 model.name = nameField.getText();
             }
         }
@@ -188,7 +187,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
             int selected = filterList.getSelectedIndex();
 
             if (selected >= 0) {
-                model = (ConfigurableFilterModel) filterListModel.getElementAt(selected);
+                model = filterListModel.getElementAt(selected);
                 if (e.getActionCommand().equals(MATCH_ALL)) {
                     model.matchAll = true;
                 } else {
@@ -261,11 +260,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         JComponent toolbar = actions.getComponent();
 
-        filterListModel = new DefaultListModel();
-        filterList = new JList(filterListModel);
-
-        testListModel = new DefaultListModel();
-        testList = new JList(testListModel);
+        filterListModel = new DefaultListModel<>();
+        filterList = new JList<>(filterListModel);
 
         pathTable = new PathTable();
         attributeTable = new ConfigurationTable();
@@ -361,25 +357,6 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         panel.add(tabs, constraints);
 
-        ///////////////////////////
-
-        /*
-        JButton testButton = new JButton("Test Filter");
-
-        constraints.gridx = 3;
-        constraints.gridy = 0;
-        constraints.weightx = 0.0;
-        constraints.weighty = 0.0;
-
-        panel.add(testButton, constraints);
-
-        constraints.gridy = 1;
-        constraints.weighty = 10.0;
-        constraints.gridheight = 2;
-
-        panel.add(new ListScrollPane(testList), constraints);
-        */
-
         return panel;
     }
 
@@ -399,8 +376,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         }
 
         for (int i=0; i<filterListModel.size(); i++) {
-            XFilesFilterConfiguration externalizable = (XFilesFilterConfiguration) configuration.CONFIGURED_FILTERS.get(i);
-            ConfigurableFilterModel configurable = (ConfigurableFilterModel) filterListModel.get(i);
+            XFilesFilterConfiguration externalizable = configuration.CONFIGURED_FILTERS.get(i);
+            ConfigurableFilterModel configurable = filterListModel.get(i);
             if (!equals(externalizable, configurable)) {
                 log.debug("configuration " + externalizable.NAME + " modified");
                 return true;
@@ -414,10 +391,10 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
      * Apply (store) values to the saved configuration.
      */
     public void apply() {
-        configuration.CONFIGURED_FILTERS = new ArrayList();
+        configuration.CONFIGURED_FILTERS = new ArrayList<>();
 
         for (int i=0; i<filterListModel.size(); i++) {
-            ConfigurableFilterModel configurable = (ConfigurableFilterModel) filterListModel.get(i);
+            ConfigurableFilterModel configurable = filterListModel.get(i);
             XFilesFilterConfiguration externalizable = new XFilesFilterConfiguration();
             configurable.apply(externalizable);
             configuration.CONFIGURED_FILTERS.add(externalizable);
@@ -446,11 +423,9 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         filterListModel.clear();
 
-        for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
-            XFilesFilterConfiguration filterConfig = (XFilesFilterConfiguration) iterator.next();
-
+        for (XFilesFilterConfiguration config : configuration.CONFIGURED_FILTERS) {
             ConfigurableFilterModel filterModel = new ConfigurableFilterModel(counts);
-            filterModel.reset(filterConfig);
+            filterModel.reset(config);
 
             filterListModel.addElement(filterModel);
         }
@@ -471,6 +446,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
     // ProjectComponent methods
 
+    @NotNull
     public String getComponentName() {
         return "XFilesConfigurable";
     }
@@ -482,7 +458,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
     }
 
     public void projectOpened() {
-        configuration = (XFilesConfiguration) project.getComponent(XFilesConfiguration.class);
+        configuration = project.getComponent(XFilesConfiguration.class);
     }
 
     public void projectClosed() {
@@ -530,8 +506,8 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
     }
 
     private void swap(int index1, int index2) {
-        Object element1 = filterListModel.getElementAt(index1);
-        Object element2 = filterListModel.getElementAt(index2);
+        ConfigurableFilterModel element1 = filterListModel.getElementAt(index1);
+        ConfigurableFilterModel element2 = filterListModel.getElementAt(index2);
 
         filterListModel.setElementAt(element1, index2);
         filterListModel.setElementAt(element2, index1);
@@ -597,7 +573,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
     // - ConfigurableFilterConfiguration
     // both extending FilterConfiguration which implements .equals()
 
-    private class ConfigurationItem implements Comparable {
+    private class ConfigurationItem implements Comparable<ConfigurationItem> {
         private Boolean included;
         private String text;
         private Integer count;
@@ -608,8 +584,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
             this.count = new Integer(count);
         }
 
-        public int compareTo(Object o) {
-            ConfigurationItem that = (ConfigurationItem) o;
+        public int compareTo(@NotNull ConfigurationItem that) {
             return this.text.compareTo(that.text);
         }
     }
@@ -617,7 +592,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
     private class ConfigurationTableModel extends AbstractTableModel {
 
         private String name;
-        private List items = new ArrayList();
+        private List<ConfigurationItem> items = new ArrayList<>();
 
         public ConfigurationTableModel() {
         }
@@ -636,8 +611,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         public ConfigurationTableModel(VirtualFileCounterMap map) {
             this.name = map.getName();
 
-            for (Iterator iterator = map.getCounters().iterator(); iterator.hasNext();) {
-                VirtualFileCounter counter = (VirtualFileCounter) iterator.next();
+            for (VirtualFileCounter counter: map.getCounters()) {
                 items.add(new ConfigurationItem(false, counter.getName(), counter.getCount()));
             }
 
@@ -682,7 +656,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
         }
 
         public Object getValueAt(int row, int column) {
-            ConfigurationItem item = (ConfigurationItem) items.get(row);
+            ConfigurationItem item = items.get(row);
             switch (column) {
                 case 0: return item.included;
                 case 1: return item.text;
@@ -693,7 +667,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
 
         public void setValueAt(Object value, int row, int column) {
             Boolean included = (Boolean) value;
-            ConfigurationItem item = (ConfigurationItem) items.get(row);
+            ConfigurationItem item = items.get(row);
             switch (column) {
                 case 0: item.included = included;
                 default: ; // exception!
@@ -792,9 +766,9 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
          * TODO: the patterns should be compiled and validated as they are entered
          * and invalid patterns should be disallowed somehow
          */
-        public List getSelectedItems() {
+        public List<String> getSelectedItems() {
             int size = getRowCount();
-            List selected = new ArrayList(size);
+            List<String> selected = new ArrayList<>(size);
             for (int i=0; i<size; i++) {
                 String item = (String) getValueAt(i, 0);
                 if (item != null) {
@@ -805,7 +779,7 @@ public class XFilesConfigurable implements Configurable, ProjectComponent {
             return selected;
         }
 
-        public void setSelectedItems(List selected) {
+        public void setSelectedItems(List<String> selected) {
             int size = selected.size();
             setRowCount(size);
             for (int i=0; i<size; i++) {

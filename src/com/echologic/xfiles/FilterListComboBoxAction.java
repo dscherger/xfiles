@@ -5,13 +5,14 @@
  */
 package com.echologic.xfiles;
 
-import java.util.Iterator;
 import javax.swing.JComponent;
 
+import org.jetbrains.annotations.NotNull;
+
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -46,8 +47,7 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         log.debug("scroll from source " + configuration.SCROLL_FROM_SOURCE);
         log.debug(configuration.CONFIGURED_FILTERS.size() + " configured filters");
 
-        for (Iterator iterator = configuration.CONFIGURED_FILTERS.iterator(); iterator.hasNext();) {
-            XFilesFilterConfiguration filter = (XFilesFilterConfiguration) iterator.next();
+        for (XFilesFilterConfiguration filter : configuration.CONFIGURED_FILTERS) {
             log.debug("filter " + filter.NAME);
         }
     }
@@ -88,6 +88,7 @@ public class FilterListComboBoxAction extends ComboBoxAction {
      * is through the EditConfigurationsAction. When some SelectFilterAction is
      * performed we need to update the presentation text.
      */
+    @NotNull
     protected DefaultActionGroup createPopupActionGroup(JComponent component) {
         log.debug("createPopupActionGroup");
         return group;
@@ -109,7 +110,7 @@ public class FilterListComboBoxAction extends ComboBoxAction {
         XFilesVirtualFileFilter selected = null;
 
         for (int i=0; i<size; i++) {
-            XFilesFilterConfiguration config = (XFilesFilterConfiguration) configuration.CONFIGURED_FILTERS.get(i);
+            XFilesFilterConfiguration config = configuration.CONFIGURED_FILTERS.get(i);
             XFilesVirtualFileFilter filter = new XFilesVirtualFileFilter(project);
             filter.setConfiguration(config);
 
